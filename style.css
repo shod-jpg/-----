@@ -1,0 +1,188 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #1e144f, #5b3f91);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .game-container {
+    text-align: center;
+  }
+  
+  .slot-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 80px);
+    grid-template-rows: repeat(5, 80px);
+    gap: 5px;
+    background: #00000055;
+    padding: 10px;
+    border: 4px solid gold;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  #slot-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 80px);
+    grid-template-rows: repeat(5, 80px);
+    gap: 6px;
+    background: #111;
+    padding: 10px;
+    border-radius: 12px;
+    border: 2px solid #ffd700aa;
+    box-shadow: inset 0 0 10px #ffd70055;
+  }
+  
+  .slot-cell {
+    background: linear-gradient(145deg, #222, #000);
+    border: 2px solid #d4af37;
+    border-radius: 10px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 4px #ffd700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  
+  
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  #spin-button {
+    padding: 10px 30px;
+    font-size: 18px;
+    background-color: gold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #222;
+    font-weight: bold;
+  }
+  
+  .balance, .win {
+    font-size: 20px;
+  }
+
+  .win-highlight {
+    background-color: rgba(255, 255, 200, 0.3);
+    border: 2px solid #ffea00;
+    box-shadow: 0 0 10px #ffeb3b, 0 0 20px #ffd700;
+  }
+  
+  body {
+    background-image: url('casino.gif');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  #slot-container {
+    padding: 20px;
+    background: radial-gradient(circle, #222 30%, #000);
+    border: 4px solid gold;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.1);
+    max-width: fit-content;
+    margin: 40px auto;
+    position: relative;
+    animation: goldPulse 5s infinite;
+  }
+  
+  @keyframes goldPulse {
+    0% {
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), inset 0 0 5px rgba(255, 255, 255, 0.05);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+    100% {
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), inset 0 0 5px rgba(255, 255, 255, 0.05);
+    }
+  }
+  
+
+  #spin-button {
+    margin-top: 20px;
+    background: linear-gradient(145deg, #ffd700, #ffa500);
+    color: #000;
+    font-weight: bold;
+    padding: 12px 28px;
+    font-size: 18px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+    transition: all 0.3s ease;
+  }
+  
+  #spin-button:hover {
+    background: linear-gradient(145deg, #ffe600, #ff9900);
+    box-shadow: 0 0 20px rgba(255, 200, 0, 0.8);
+    transform: scale(1.05);
+  }
+  
+
+  #icon-style-menu {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+  }
+  
+  #style-button {
+    background: linear-gradient(135deg, #ffdf00, #ffaa00);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  
+  #style-dropdown {
+    margin-top: 8px;
+    background: #222;
+    border: 2px solid gold;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: absolute;
+    right: 0;
+    width: 160px;
+  }
+  
+  .style-option {
+    background: #333;
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.2s ease;
+  }
+  
+  .style-option:hover {
+    background: #555;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  

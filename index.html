@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fake Gates of Olympus</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="game-container">
+    <div class="slot-grid" id="slot-grid">
+      <!-- Слоти генеруються через JS -->
+    </div>
+    <div class="controls">
+      <button id="spin-button">SPIN (-$100)</button>
+      <div class="balance">Balance: $<span id="balance">100000</span></div>
+      <div class="win">Win: $<span id="win-amount">0</span></div>
+    </div>
+    <div id="icon-style-menu">
+        <button id="style-button">🎨 Стиль іконок</button>
+        <div id="style-dropdown" class="hidden">
+          <div class="style-option" data-style="standard">🎰 Стандарт</div>
+          <div class="style-option" data-style="animals">🦁 Звірі</div>
+          <div class="style-option" data-style="crystals">💎 Кристали</div>
+          <div class="style-option" data-style="hearts">❤️ Серця</div>
+          <div class="style-option" data-style="food">🍔 Їжа</div>
+        </div>
+      </div>
+      
+
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
