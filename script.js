@@ -13,15 +13,14 @@ const spinButton = document.getElementById('spin-button');
 const balanceDisplay = document.getElementById('balance');
 const winDisplay = document.getElementById('win-amount');
 
-const rows = 5;
+const rows = 6;
 const cols = 6;
 const spinCost = 100;
 let balance = 100000;
 
 function getRandomSymbol() {
-    return currentSymbols[Math.floor(Math.random() * currentSymbols.length)];
-  }
-  
+  return currentSymbols[Math.floor(Math.random() * currentSymbols.length)];
+}
 
 function createGrid() {
   grid.innerHTML = '';
@@ -42,85 +41,132 @@ function getCell(row, col) {
 }
 
 function checkMatches() {
-  let win = 0;
-  let matchedCells = new Set();
+  const multipliers = {
+    2: 0.25,
+    3: 0.75,
+    4: 1.25,
+    5: 2.5,
+    6: 10
+  };
+  let bestCombo = {mult: 0, cells: []};
 
-  // Горизонтальні ряди
+  // Ряди
   for (let r = 0; r < rows; r++) {
-    let currentSymbol = getCell(r, 0).textContent;
-    let match = true;
+    let count = 1;
+    let tempCells = [getCell(r, 0)];
     for (let c = 1; c < cols; c++) {
-      if (getCell(r, c).textContent !== currentSymbol) {
-        match = false;
-        break;
+      if (getCell(r, c).textContent === getCell(r, c - 1).textContent) {
+        count++;
+        tempCells.push(getCell(r, c));
+      } else {
+        if (count >= 2 && multipliers[count] > bestCombo.mult) {
+          bestCombo.mult = multipliers[count];
+          bestCombo.cells = tempCells.slice();
+        }
+        count = 1;
+        tempCells = [getCell(r, c)];
       }
     }
-    if (match) {
-      win += 300;
-      for (let c = 0; c < cols; c++) {
-        matchedCells.add(getCell(r, c));
-      }
+    if (count >= 2 && multipliers[count] > bestCombo.mult) {
+      bestCombo.mult = multipliers[count];
+      bestCombo.cells = tempCells.slice();
     }
   }
 
-  // Діагоналі ↘
-  for (let startCol = 0; startCol <= cols - rows; startCol++) {
-    let match = true;
-    let symbol = getCell(0, startCol).textContent;
-    for (let i = 1; i < rows; i++) {
-      if (getCell(i, startCol + i).textContent !== symbol) {
-        match = false;
-        break;
+  // Стовпці
+  for (let c = 0; c < cols; c++) {
+    let count = 1;
+    let tempCells = [getCell(0, c)];
+    for (let r = 1; r < rows; r++) {
+      if (getCell(r, c).textContent === getCell(r - 1, c).textContent) {
+        count++;
+        tempCells.push(getCell(r, c));
+      } else {
+        if (count >= 2 && multipliers[count] > bestCombo.mult) {
+          bestCombo.mult = multipliers[count];
+          bestCombo.cells = tempCells.slice();
+        }
+        count = 1;
+        tempCells = [getCell(r, c)];
       }
     }
-    if (match) {
-      win += 500;
-      for (let i = 0; i < rows; i++) {
-        matchedCells.add(getCell(i, startCol + i));
-      }
+    if (count >= 2 && multipliers[count] > bestCombo.mult) {
+      bestCombo.mult = multipliers[count];
+      bestCombo.cells = tempCells.slice();
     }
   }
 
-  // Діагоналі ↙
-  for (let startCol = rows - 1; startCol < cols; startCol++) {
-    let match = true;
-    let symbol = getCell(0, startCol).textContent;
-    for (let i = 1; i < rows; i++) {
-      if (getCell(i, startCol - i).textContent !== symbol) {
-        match = false;
-        break;
+  // Діагональ ↘
+  for (let d = -(rows - 2); d <= cols - 2; d++) {
+    let count = 0;
+    let tempCells = [];
+    for (let r = 0; r < rows; r++) {
+      let c = r + d;
+      if (c >= 0 && c < cols) {
+        if (tempCells.length === 0 || getCell(r, c).textContent === tempCells[tempCells.length - 1].textContent) {
+          count++;
+          tempCells.push(getCell(r, c));
+        } else {
+          if (count >= 2 && multipliers[count] > bestCombo.mult) {
+            bestCombo.mult = multipliers[count];
+            bestCombo.cells = tempCells.slice();
+          }
+          count = 1;
+          tempCells = [getCell(r, c)];
+        }
       }
     }
-    if (match) {
-      win += 500;
-      for (let i = 0; i < rows; i++) {
-        matchedCells.add(getCell(i, startCol - i));
-      }
+    if (count >= 2 && multipliers[count] > bestCombo.mult) {
+      bestCombo.mult = multipliers[count];
+      bestCombo.cells = tempCells.slice();
     }
   }
 
-  // Повне поле одним символом
-  const firstSymbol = getCell(0, 0).textContent;
-  let allMatch = true;
-  for (let i = 0; i < rows * cols; i++) {
-    if (grid.children[i].textContent !== firstSymbol) {
-      allMatch = false;
-      break;
+  // Діагональ ↙
+  for (let d = 1; d <= rows + cols - 2; d++) {
+    let count = 0;
+    let tempCells = [];
+    for (let r = 0; r < rows; r++) {
+      let c = d - r;
+      if (c >= 0 && c < cols) {
+        if (tempCells.length === 0 || getCell(r, c).textContent === tempCells[tempCells.length - 1].textContent) {
+          count++;
+          tempCells.push(getCell(r, c));
+        } else {
+          if (count >= 2 && multipliers[count] > bestCombo.mult) {
+            bestCombo.mult = multipliers[count];
+            bestCombo.cells = tempCells.slice();
+          }
+          count = 1;
+          tempCells = [getCell(r, c)];
+        }
+      }
     }
-  }
-  if (allMatch) {
-    win += 1000000;
-    for (let i = 0; i < rows * cols; i++) {
-      matchedCells.add(grid.children[i]);
+    if (count >= 2 && multipliers[count] > bestCombo.mult) {
+      bestCombo.mult = multipliers[count];
+      bestCombo.cells = tempCells.slice();
     }
   }
 
-  // Підсвічування виграшу
-  matchedCells.forEach(cell => {
-    cell.classList.add('win-highlight');
+  // Підсвічування
+  Array.from(grid.children).forEach(cell => {
+    cell.classList.add('slot-cell-dark');
+    cell.classList.remove('win-highlight-blue');
+  });
+  bestCombo.cells.forEach(cell => {
+    cell.classList.remove('slot-cell-dark');
+    cell.classList.add('win-highlight-blue');
   });
 
-  return win;
+  return {win: bestCombo.mult > 0 ? Math.floor(spinCost * bestCombo.mult) : 0, cells: bestCombo.cells};
+}
+
+function clearHighlights() {
+  Array.from(grid.children).forEach(cell => {
+    cell.classList.remove('slot-cell-dark');
+    cell.classList.remove('win-highlight-blue');
+    cell.classList.remove('win-highlight');
+  });
 }
 
 function spinSlots() {
@@ -133,12 +179,14 @@ function spinSlots() {
   updateDisplay();
   winDisplay.textContent = 0;
 
-  const spinDuration = Math.floor(Math.random() * 2000 + 3000);
+  const spinDuration = 3000;
 
-  // Видаляємо попереднє підсвічування
-  Array.from(grid.children).forEach(cell => {
-    cell.classList.remove('win-highlight');
-  });
+  clearHighlights();
+
+  let isWinSpin = Math.random() < 0.4;
+  if (!isWinSpin) {
+    createGrid(true);
+  }
 
   const columns = [];
   for (let c = 0; c < cols; c++) {
@@ -162,12 +210,22 @@ function spinSlots() {
   });
 
   setTimeout(() => {
-    const winAmount = checkMatches();
-    if (winAmount > 0) {
-      balance += winAmount;
+    let winResult = {win: 0, cells: []};
+    if (isWinSpin) {
+      winResult = checkMatches();
     }
-    winDisplay.textContent = winAmount;
-    updateDisplay();
+    if (winResult.win > 0) {
+      balance += winResult.win;
+      winDisplay.textContent = winResult.win;
+      updateDisplay();
+      setTimeout(() => {
+        clearHighlights();
+      }, 2000);
+    } else {
+      winDisplay.textContent = 0;
+      updateDisplay();
+      clearHighlights();
+    }
   }, spinDuration + 200);
 }
 
