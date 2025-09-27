@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ук">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Поповнення балансу — LyceumCasinoUa</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="topup">
+  <div class="game-container">
+    <div class="topup-card">
+      <h2 class="topup-title">Поповнення</h2>
+      <div class="topup-balance">Поточний баланс: 💎<span id="topup-balance">0</span></div>
+
+      <div class="field-group">
+        <label class="label">Номер картки</label>
+        <div class="fake-input">7777-7777-7777-7777</div>
+      </div>
+
+      <div class="row-two">
+        <div class="field-group">
+          <label class="label">Дата</label>
+          <div class="fake-input">07/27</div>
+        </div>
+        <div class="field-group">
+          <label class="label">CVV</label>
+          <div class="fake-input">777</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="label">Введіть суму:</label>
+        <input id="topup-amount" class="real-input" type="number" min="1" max="10000" step="1" placeholder="0" />
+        <div class="hint">Максимум 10000. Сума буде зарахована на ваш баланс.</div>
+      </div>
+
+      <div class="topup-actions">
+        <button id="topup-ok" class="topup-btn" type="button">OK</button>
+      </div>
+
+      <div id="topup-msg" class="msg" aria-live="polite"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px;">
+      <a class="topup-btn" href="index.html">⬅️ На головну</a>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var balanceEl = document.getElementById('topup-balance');
+      var amountEl = document.getElementById('topup-amount');
+      var okBtn = document.getElementById('topup-ok');
+      var msgEl = document.getElementById('topup-msg');
+
+      function loadBalance() {
+        var raw = localStorage.getItem('balance');
+        var val = raw !== null ? Math.floor(Number(raw)) : 0;
+        if (!Number.isFinite(val) || val < 0) val = 0;
+        balanceEl.textContent = String(val);
+        return val;
+      }
+      function saveBalance(val) {
+        localStorage.setItem('balance', String(val));
+        balanceEl.textContent = String(val);
+      }
+
+      var current = loadBalance();
+
+      amountEl.addEventListener('input', function() {
+        var v = Math.floor(Number(amountEl.value));
+        if (!Number.isFinite(v)) v = 0;
+        if (v > 10000) {
+          v = 10000;
+          amountEl.value = String(v);
+        } else if (v < 0) {
+          v = 0;
+          amountEl.value = '0';
+        }
+      });
+
+      okBtn.addEventListener('click', function() {
+        var v = Math.floor(Number(amountEl.value));
+        if (!v || v < 1) {
+          alert('Введіть коректну суму (ціле число від 1). Максимум 10000.');
+          return;
+        }
+        if (v > 10000) {
+          alert('Максимальна сума поповнення 10000.');
+          amountEl.value = '10000';
+          return;
+        }
+
+        var newBalance = loadBalance() + v;
+        saveBalance(newBalance);
+        msgEl.textContent = 'Зараховано: ' + v + '. Новий баланс: ' + newBalance + ' 💎';
+        amountEl.value = '';
+      });
+    })();
+  </script>
+</body>
+</html>

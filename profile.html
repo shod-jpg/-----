@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Мій кабінет — LyceumCasinoUa</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="profile">
+  <div class="game-container">
+    <div class="profile-card">
+      <h2 class="profile-title">Profile</h2>
+
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <!-- Заміни src на своє фото; обрізання до кола виконує CSS -->
+          <img id="profile-avatar" src="avatar1.png" alt="Avatar">
+        </div>
+      </div>
+
+      <div class="profile-meta">
+        <div class="profile-row">
+          <span>Balance:</span>
+          <span class="value">💎<span id="profile-balance">0</span></span>
+        </div>
+        <div class="profile-row">
+          <span>Time spent:</span>
+          <span class="value">777h</span>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Level</div><div class="kpi-value">12</div></div>
+        <div class="kpi-card"><div class="kpi-label">VIP</div><div class="kpi-value">Silver</div></div>
+        <div class="kpi-card"><div class="kpi-label">Win rate</div><div class="kpi-value">33%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Daily streak</div><div class="kpi-value">777 days</div></div>
+        <div class="kpi-card"><div class="kpi-label">Joined</div><div class="kpi-value">2025-07-07</div></div>
+      </div>
+
+      <div class="profile-actions">
+        <a class="btn" href="index.html">На головну</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Підтягнути баланс із локального сховища
+    (function() {
+      var el = document.getElementById('profile-balance');
+      var raw = localStorage.getItem('balance');
+      var val = raw !== null ? Math.floor(Number(raw)) : 0;
+      if (Number.isFinite(val) && el) el.textContent = String(val);
+    })();
+  </script>
+</body>
+</html>

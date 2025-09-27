@@ -1,8 +1,27 @@
 :root {
-  /* Збільшено розмір клітинки у 1.5 раза (60px -> 90px) */
+
   --cell-size: 90px;
   --cols: 6;
   --rows: 5;
+  --icon-scale: 0.82; /* масштаб зображення в клітинці (0..1) */
+}
+
+/* Персональні фони сторінок (заміни URL-и на свої) */
+body[data-page="index"] {
+  /* базовий фон вже заданий як дефолт через var() */
+  /* за потреби: --page-bg-image: url('your-index-bg.jpg'); */
+}
+body[data-page="profile"] {
+  --page-bg-image: url('MyCabinet.png'); /* замінити */
+}
+body[data-page="topup"] {
+  --page-bg-image: url('Balance.png'); /* замінити */
+}
+body[data-page="history"] {
+  --page-bg-image: url('Wins.png'); /* замінити */
+}
+body[data-page="support"] {
+  --page-bg-image: url('Support.png'); /* замінити */
 }
 
 * { box-sizing: border-box; }
@@ -15,7 +34,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-image: url('lyceum.jpg');
+  background-image: var(--page-bg-image, url('lyceum.jpg'));
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -36,9 +55,7 @@ body {
 #style-button {
   background: linear-gradient(135deg,#ffdf00,#ffaa00);
   border: none;
-  /* padding 8px 12px -> 12px 18px */
   padding: 12px 18px;
-  /* border-radius 12px -> 18px */
   border-radius: 18px;
   cursor: pointer;
   font-weight: bold;
@@ -47,20 +64,18 @@ body {
   margin-top: 8px;
   background: #222;
   border: 2px solid gold;
-  /* border-radius 12px -> 18px */
   border-radius: 18px;
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  /* width 160px -> 240px */
   width: 240px;
 }
 .style-option {
   background: #333;
-  /* padding 6px -> 9px */
+ 
   padding: 9px;
-  /* border-radius 6px -> 9px */
+  
   border-radius: 9px;
   cursor: pointer;
   text-align: center;
@@ -70,17 +85,17 @@ body {
 /* slot grid */
 #slot-container {
   margin: 40px auto 10px;
-  /* padding 12px -> 18px */
+  
   padding: 18px;
-  /* border-radius 24px -> 36px */
+  
   border-radius: 36px;
   display: inline-block;
   position: relative;
 
-  border: 6px solid transparent; /* 4px -> 6px */
+  border: 6px solid transparent; 
   background-image:
-    radial-gradient(circle,#111,#000 70%), /* внутрішній фон */
-    linear-gradient(135deg, #ffd700 0%, #ffb347 50%, #ffd700 100%); /* золота обводка */
+    radial-gradient(circle,#111,#000 70%),
+    linear-gradient(135deg, #ffd700 0%, #ffb347 50%, #ffd700 100%);
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
 
@@ -93,7 +108,7 @@ body {
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell-size));
   grid-template-rows: repeat(var(--rows), var(--cell-size));
-  /* gap 8px -> 12px */
+  
   gap: 12px;
   border-radius: 12px;
 }
@@ -104,10 +119,22 @@ body {
   align-items:center;
   justify-content:center;
   background: linear-gradient(145deg,#222,#000);
-  /* border-radius 12px -> 18px */
+  
   border-radius: 18px;
-  /* font-size 24px -> 36px */
-  font-size: 36px;
+ 
+  /* прибираємо розмір шрифту, тепер іконка — це зображення */
+}
+
+/* зображення-іконка всередині клітинки */
+.slot-cell .icon-img {
+  width: calc(var(--cell-size) * var(--icon-scale));
+  height: calc(var(--cell-size) * var(--icon-scale));
+  object-fit: contain;       /* вміст повністю видно, зберігає пропорції */
+  image-rendering: auto;
+  pointer-events: none;
+  user-select: none;
+  display: block;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
 }
 
 /* controls */
@@ -115,15 +142,14 @@ body {
   margin-top: 18px;
   display: flex;
   align-items: center;
-  /* ширина підганяємо під ширину вікна прокрутки:
-     cols * cell-size + 2 * (padding + border) → padding 18px + border 6px = 24px на бік → +48px */
+
   width: calc(var(--cell-size) * var(--cols) + 48px);
   max-width: 100%;
   gap: 18px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
-  padding: 0; /* прибираємо внутрішні відступи, щоб точніше вирівнювати */
+  padding: 0; 
 }
 
 /* три зони: ліво, центр, право */
@@ -140,7 +166,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* центрова зона не росте і займає мінімум простору */
+  
   flex-direction: column;
   gap: 10px;
 }
@@ -164,8 +190,8 @@ body {
 
   /* внутрішній темний фон + зовнішня темніша "золота" обводка */
   background-image:
-    linear-gradient(180deg, rgba(12,12,12,0.9), rgba(28,28,28,0.85)), /* inner (padding-box) */
-    linear-gradient(135deg, #b8860b 0%, #8c5a00 50%, #b8860b 100%); /* border (border-box) */
+    linear-gradient(180deg, rgba(12,12,12,0.9), rgba(28,28,28,0.85)), 
+    linear-gradient(135deg, #b8860b 0%, #8c5a00 50%, #b8860b 100%); 
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
 
@@ -185,9 +211,9 @@ body {
 button {
   background: linear-gradient(135deg,#ffdf00,#ffaa00);
   border: none;
-  /* padding 8px 12px -> 12px 18px */
+  
   padding: 12px 18px;
-  /* border-radius 12px -> 18px */
+
   border-radius: 18px;
   cursor: pointer;
   font-weight: bold;
@@ -210,7 +236,7 @@ button:active:enabled {
 .win-highlight-blue {
   border: 3px solid rgba(30,144,255,0.95);
   box-shadow: 0 0 14px rgba(30,144,255,0.85), inset 0 0 8px rgba(255,255,255,0.03);
-  border-radius: 18px; /* узгодити з .slot-cell */
+  border-radius: 18px;
   z-index: 2;
   transition: box-shadow 0.25s ease, transform 0.15s ease;
 }
@@ -234,8 +260,8 @@ button:active:enabled {
   border-radius: 14px;
   border: 4px solid transparent;
   background-image:
-    linear-gradient(180deg, rgba(12,12,12,0.9), rgba(28,28,28,0.85)), /* inner (padding-box) */
-    linear-gradient(135deg, #b8860b 0%, #8c5a00 50%, #b8860b 100%);   /* border (border-box) */
+    linear-gradient(180deg, rgba(12,12,12,0.9), rgba(28,28,28,0.85)), 
+    linear-gradient(135deg, #b8860b 0%, #8c5a00 50%, #b8860b 100%);   
   background-origin: padding-box, border-box;
   background-clip: padding-box, border-box;
   box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 0 10px rgba(255,255,255,0.02);
@@ -251,14 +277,14 @@ button:active:enabled {
 /* оновлення стилю інпуту під єдине поле */
 #bet-input {
   width: 120px;
-  padding: 0;              /* без внутрішніх відступів, щоб злитись з контейнером */
-  border-radius: 0;        /* без власних кутів */
-  border: none;            /* без власної обводки */
-  background: transparent; /* прозорий фон, один фон на весь блок */
+  padding: 0;              
+  border-radius: 0;        
+  border: none;            
+  background: transparent; 
   color: #fff;
   font-weight: 700;
   text-align: center;
-  box-shadow: none;        /* прибрати внутрішню тінь */
+  box-shadow: none;        
   outline: none;
 }
 
@@ -341,7 +367,8 @@ button:active:enabled {
   gap: 10px;
 }
 
-.drawer-item button {
+.drawer-item button,
+.drawer-item a {
   width: 100%;
   text-align: left;
   padding: 12px 14px;
@@ -352,11 +379,15 @@ button:active:enabled {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.03);
+  text-decoration: none; /* для <a> */
+  display: block;        /* для <a> */
 }
-.drawer-item button:hover {
+.drawer-item button:hover,
+.drawer-item a:hover {
   background: linear-gradient(180deg, #2a2a2a, #202020);
 }
-.drawer-item button:active {
+.drawer-item button:active,
+.drawer-item a:active {
   background: linear-gradient(180deg, #1f1f1f, #191919);
 }
 
@@ -381,8 +412,8 @@ button:active:enabled {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 8px; /* вужча зона, щоб не перекривати ручку */
-  z-index: 1000; /* нижче за шухляду/ручку */
+  width: 8px; 
+  z-index: 1000; 
   background: transparent;
   pointer-events: auto;
 }
@@ -399,24 +430,24 @@ button:active:enabled {
 #drawer-house {
   position: absolute;
   top: 50%;
-  right: -28px;            /* було -40px; тепер випирає рівно на половину ширини */
+  right: -56px;            
   transform: translateY(-50%);
-  width: 56px;            /* квадратна рамка для симетрії */
+  width: 56px;            
   height: 56px;
-  display: flex;          /* точне центрування іконки */
+  display: flex;          
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  line-height: 1;         /* прибрано line-height: 0; */
+  line-height: 1;         
   color: #fff;
   background: linear-gradient(180deg, #222, #171717);
   border: 1px solid #3a3a3a;
-  border-left: none;       /* стикується з шухлядою без шва */
+  border-left: none;       
   border-radius: 0 14px 14px 0;
   box-shadow: 18px 0 24px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.04);
   cursor: pointer;
   transition: background 180ms ease, box-shadow 180ms ease;
-  z-index: 2;              /* поверх вмісту шухляди */
+  z-index: 2;              
 }
 #drawer-house:hover,
 #drawer-house:focus-visible {
@@ -427,6 +458,243 @@ button:active:enabled {
 /* коли шухляда відкрита — ручка залишається всередині */
 #right-drawer.open ~ #drawer-house {
   transform: translate(0, -50%);
+}
+
+/* === Profile page (glass card) === */
+body[data-page="profile"] .profile-card {
+  width: min(900px, 92vw);
+  margin: 48px auto 16px;
+  padding: 20px 22px;
+  background: rgba(255,255,255,0.30);             /* ~70% прозора */
+  border: 2px solid rgba(255,255,255,0.10);        /* ~90% прозорі рамки */
+  border-radius: 24px;                              /* закруглені */
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35), inset 0 0 1px rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+body[data-page="profile"] .profile-title {
+  display: inline-block;
+  margin: 0 auto 16px;
+  padding: 8px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.20);
+  backdrop-filter: inherit;
+  -webkit-backdrop-filter: inherit;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+body[data-page="profile"] .profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 12px;
+}
+
+body[data-page="profile"] .profile-avatar {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  overflow: hidden;               /* обрізання до кола */
+  border: 3px solid rgba(255,255,255,0.18);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+body[data-page="profile"] .profile-avatar img {
+  padding-right:114px;
+  padding-bottom: 60%;
+  width: 170%;
+  height: 200%;
+  object-fit: cover;              /* обрізання фото під круг */
+}
+
+body[data-page="profile"] .profile-meta {
+  display: grid;
+  gap: 8px;
+  margin: 12px auto 16px;
+  width: min(680px, 100%);
+}
+body[data-page="profile"] .profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.14);
+}
+body[data-page="profile"] .profile-row .value {
+  font-weight: 800;
+}
+
+body[data-page="profile"] .kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+body[data-page="profile"] .kpi-card {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.16);
+  box-shadow: inset 0 0 1px rgba(255,255,255,0.15);
+}
+body[data-page="profile"] .kpi-label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+body[data-page="profile"] .kpi-value {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+body[data-page="profile"] .profile-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
+}
+body[data-page="profile"] .profile-actions .btn {
+  text-decoration: none;
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.20);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.06);
+}
+body[data-page="profile"] .profile-actions .btn:hover {
+  background: rgba(255,255,255,0.26);
+}
+body[data-page="profile"] .profile-actions .btn.danger {
+  border-color: rgba(255,99,71,0.35);
+  background: rgba(255,99,71,0.20);
+}
+body[data-page="profile"] .profile-actions .btn.danger:hover {
+  background: rgba(255,99,71,0.28);
+}
+
+/* === Topup page (glass gray card) === */
+body[data-page="topup"] .topup-card {
+  width: min(720px, 92vw);
+  margin: 48px auto 16px;
+  padding: 20px 22px;
+  background: linear-gradient(180deg, rgba(90,90,90,0.35), rgba(30,30,30,0.35)); /* ~90% прозора */
+  border: 2px solid rgba(255,255,255,0.18); /* легка рамка */
+  border-radius: 20px;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35), inset 0 0 1px rgba(255,255,255,0.20);
+  color: #fff;
+}
+body[data-page="topup"] .topup-title {
+  display: inline-block;
+  margin: 0 auto 16px;
+  padding: 8px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: inherit;
+  -webkit-backdrop-filter: inherit;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+body[data-page="topup"] .topup-balance {
+  text-align: center;
+  margin: 4px 0 14px;
+  opacity: 0.95;
+  font-weight: 800;
+}
+
+body[data-page="topup"] .field-group {
+  margin-bottom: 12px;
+}
+body[data-page="topup"] .label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+  opacity: 0.95;
+}
+body[data-page="topup"] .fake-input {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.95);
+  pointer-events: none; /* бутафорне поле */
+  user-select: none;
+  font-weight: 700;
+}
+body[data-page="topup"] .row-two {
+  display: grid;
+  grid-template-columns: 0.4fr 0.6fr; /* 40% / 60% */
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  body[data-page="topup"] .row-two { grid-template-columns: 1fr; }
+}
+
+body[data-page="topup"] .real-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.24);
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  box-shadow: inset 0 0 6px rgba(255,255,255,0.06);
+}
+body[data-page="topup"] .real-input:focus {
+  border-color: rgba(255,255,255,0.28);
+}
+
+body[data-page="topup"] .hint {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+  text-align: center;
+}
+
+body[data-page="topup"] .topup-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+body[data-page="topup"] .topup-btn {
+  text-decoration: none;
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.20);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+body[data-page="topup"] .topup-btn:hover {
+  background: rgba(255,255,255,0.26);
+}
+
+body[data-page="topup"] .msg {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: 700;
+  opacity: 0.95;
 }
 
 

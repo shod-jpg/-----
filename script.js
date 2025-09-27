@@ -1,9 +1,51 @@
 const iconSets = {
-  standard: ['💎','⚡','👑','🔥','🍇','💰','🔔'],
-  animals: ['🦁','🐯','🐻','🦊','🐺','🦓','🦒'],
-  crystals: ['💎','🔷','🔶','🔮','✨','🪙','🌟'],
-  hearts: ['❤️','💖','💘','💝','💗','💕','🧡'],
-  food: ['🍔','🍕','🍩','🍓','🍇','🍟','🍭']
+  // Заміни шляхи на свої фото (png/jpg/webp). Зручно скласти по папках:
+  // c:\Users\user\Desktop\казино\assets\icons\<set>\*.png
+  standard: [
+    { id: 'std1', src: 'assets/icons/standard/01.png' },
+    { id: 'std2', src: 'assets/icons/standard/02.png' },
+    { id: 'std3', src: 'assets/icons/standard/03.png' },
+    { id: 'std4', src: 'assets/icons/standard/04.png' },
+    { id: 'std5', src: 'assets/icons/standard/05.png' },
+    { id: 'std6', src: 'assets/icons/standard/06.png' },
+    { id: 'std7', src: 'assets/icons/standard/07.png' }
+  ],
+  animals: [
+    { id: 'ani1', src: 'assets/icons/animals/01.png' },
+    { id: 'ani2', src: 'assets/icons/animals/02.png' },
+    { id: 'ani3', src: 'assets/icons/animals/03.png' },
+    { id: 'ani4', src: 'assets/icons/animals/04.png' },
+    { id: 'ani5', src: 'assets/icons/animals/05.png' },
+    { id: 'ani6', src: 'assets/icons/animals/06.png' },
+    { id: 'ani7', src: 'assets/icons/animals/07.png' }
+  ],
+  crystals: [
+    { id: 'cry1', src: 'assets/icons/crystals/01.png' },
+    { id: 'cry2', src: 'assets/icons/crystals/02.png' },
+    { id: 'cry3', src: 'assets/icons/crystals/03.png' },
+    { id: 'cry4', src: 'assets/icons/crystals/04.png' },
+    { id: 'cry5', src: 'assets/icons/crystals/05.png' },
+    { id: 'cry6', src: 'assets/icons/crystals/06.png' },
+    { id: 'cry7', src: 'assets/icons/crystals/07.png' }
+  ],
+  hearts: [
+    { id: 'hrt1', src: 'assets/icons/hearts/01.png' },
+    { id: 'hrt2', src: 'assets/icons/hearts/02.png' },
+    { id: 'hrt3', src: 'assets/icons/hearts/03.png' },
+    { id: 'hrt4', src: 'assets/icons/hearts/04.png' },
+    { id: 'hrt5', src: 'assets/icons/hearts/05.png' },
+    { id: 'hrt6', src: 'assets/icons/hearts/06.png' },
+    { id: 'hrt7', src: 'assets/icons/hearts/07.png' }
+  ],
+  food: [
+    { id: 'fd1', src: 'assets/icons/food/01.png' },
+    { id: 'fd2', src: 'assets/icons/food/02.png' },
+    { id: 'fd3', src: 'assets/icons/food/03.png' },
+    { id: 'fd4', src: 'assets/icons/food/04.png' },
+    { id: 'fd5', src: 'assets/icons/food/05.png' },
+    { id: 'fd6', src: 'assets/icons/food/06.png' },
+    { id: 'fd7', src: 'assets/icons/food/07.png' }
+  ]
 };
 let currentSymbols = iconSets.standard;
 
@@ -35,6 +77,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // ensure hidden at start
   styleDropdown.classList.add('hidden');
 
+  // зчитати баланс з localStorage (якщо є)
+  function loadBalanceFromStorage() {
+    try {
+      const raw = localStorage.getItem('balance');
+      const val = raw !== null ? Math.floor(Number(raw)) : NaN;
+      if (Number.isFinite(val) && val >= 0) balance = val;
+    } catch (_) {}
+  }
+  function saveBalanceToStorage() {
+    try { localStorage.setItem('balance', String(balance)); } catch (_) {}
+  }
+
+  loadBalanceFromStorage();
+
   // ініціалізуємо значення поля
   if (betInput) betInput.value = currentBet;
 
@@ -47,13 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i < rows * cols; i++) {
       const cell = document.createElement('div');
       cell.className = 'slot-cell';
-      cell.textContent = getRandomSymbol();
+      const sym = getRandomSymbol();
+      cell.dataset.symbol = sym.id;
+
+      const img = document.createElement('img');
+      img.className = 'icon-img';
+      img.alt = sym.id;
+      img.src = sym.src;
+
+      cell.appendChild(img);
       slotGrid.appendChild(cell);
     }
   }
 
   function updateDisplay() {
     balanceDisplay.textContent = balance;
+    saveBalanceToStorage();
   }
 
   function clearHighlights() {
@@ -62,38 +127,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function checkMatches() {
-    const multipliers = {
-      2: 0.25,
-      3: 0.5,
-      4: 1.25,
-      5: 3,
-      6: 20
-    };
+  function getSymbolIdAt(r, c) {
+    const idx = r * cols + c;
+    const el = slotGrid.children[idx];
+    return el ? el.dataset.symbol || null : null;
+  }
 
+  function checkMatches() {
+    const multipliers = { 2: 0.25, 3: 0.5, 4: 1.25, 5: 3, 6: 20 };
     let best = { mult: 0, cells: [] };
 
-    function getSymbol(r, c) {
-      const idx = r * cols + c;
-      const el = slotGrid.children[idx];
-      return el ? el.textContent : null;
-    }
-
-    // горизонталі (ряди)
+    // горизонталі
     for (let r = 0; r < rows; r++) {
       let count = 1;
       let seq = [{ r, c: 0 }];
       for (let c = 1; c < cols; c++) {
-        if (getSymbol(r, c) === getSymbol(r, c - 1)) {
-          count++;
-          seq.push({ r, c });
+        if (getSymbolIdAt(r, c) === getSymbolIdAt(r, c - 1)) {
+          count++; seq.push({ r, c });
         } else {
           if (count >= 2) {
             const mult = multipliers[count] || 0;
             if (mult > best.mult) best = { mult, cells: seq.slice() };
           }
-          count = 1;
-          seq = [{ r, c }];
+          count = 1; seq = [{ r, c }];
         }
       }
       if (count >= 2) {
@@ -102,21 +158,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // вертикалі (стовпці)
+    // вертикалі
     for (let c = 0; c < cols; c++) {
       let count = 1;
       let seq = [{ r: 0, c }];
       for (let r = 1; r < rows; r++) {
-        if (getSymbol(r, c) === getSymbol(r - 1, c)) {
-          count++;
-          seq.push({ r, c });
+        if (getSymbolIdAt(r, c) === getSymbolIdAt(r - 1, c)) {
+          count++; seq.push({ r, c });
         } else {
           if (count >= 2) {
             const mult = multipliers[count] || 0;
             if (mult > best.mult) best = { mult, cells: seq.slice() };
           }
-          count = 1;
-          seq = [{ r, c }];
+          count = 1; seq = [{ r, c }];
         }
       }
       if (count >= 2) {
@@ -132,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let r = 0; r < rows; r++) {
         const c = r - k;
         if (c < 0 || c >= cols) continue;
-        const sym = getSymbol(r, c);
+        const sym = getSymbolIdAt(r, c);
         if (prev === null || sym === prev) {
           seq.push({ r, c });
         } else {
@@ -157,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let r = 0; r < rows; r++) {
         const c = s - r;
         if (c < 0 || c >= cols) continue;
-        const sym = getSymbol(r, c);
+        const sym = getSymbolIdAt(r, c);
         if (prev === null || sym === prev) {
           seq.push({ r, c });
         } else {
@@ -285,10 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') setDrawer(false);
   });
 
-  // Optional: close drawer when clicking any drawer item
+  // Optional: close drawer when clicking any drawer item (link or button)
   drawer?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.drawer-item button');
-    if (btn) setDrawer(false);
+    const item = e.target.closest('.drawer-item a, .drawer-item button');
+    if (item) setDrawer(false);
   });
 
   // запуск анімації обертання слотів на duration мс
@@ -296,32 +350,33 @@ document.addEventListener('DOMContentLoaded', () => {
     clearHighlights();
     winDisplay.textContent = 0;
 
-    // візуальна анімація
     slotGrid.classList.add('is-spinning');
 
-    // змінюємо символи по колонках на різних швидкостях
+    // змінюємо зображення по колонках на різних швидкостях
     const intervalIds = [];
     for (let c = 0; c < cols; c++) {
-      const speed = 60 + c * 20; // трохи повільніше для кожної наступної колонки
+      const speed = 60 + c * 20;
       const id = setInterval(() => {
         for (let r = 0; r < rows; r++) {
           const idx = r * cols + c;
           const el = slotGrid.children[idx];
-          if (el) el.textContent = currentSymbols[Math.floor(Math.random() * currentSymbols.length)];
+          if (!el) continue;
+          const img = el.querySelector('img.icon-img');
+          const sym = getRandomSymbol();
+          if (img) img.src = sym.src;
+          el.dataset.symbol = sym.id;
         }
       }, speed);
       intervalIds.push(id);
     }
 
-    // зупинка через durationMs: фіксуємо остаточну сітку і рахуємо виграш
     setTimeout(() => {
       intervalIds.forEach(clearInterval);
       slotGrid.classList.remove('is-spinning');
 
-      // фінальна сітка
+      // фінальна сітка (перемалюємо, щоб зафіксувати стан)
       createGrid();
 
-      // невелика пауза щоб DOM перемалювався
       setTimeout(() => {
         clearHighlights();
         const result = checkMatches();
