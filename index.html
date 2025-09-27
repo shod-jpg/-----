@@ -1,34 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fake Gates of Olympus</title>
+  <title>Fake Gates of Olympus — clean start</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="game-container">
-    <div class="slot-grid" id="slot-grid">
-      <!-- Слоти генеруються через JS -->
-    </div>
-    <div class="controls">
-      <button id="spin-button">SPIN (-💎100)</button>
-      <div class="balance">Balance: 💎<span id="balance">100000</span></div>
-      <div class="win">Win: 💎<span id="win-amount">0</span></div>
-    </div>
     <div id="icon-style-menu">
-        <button id="style-button">🎨 Стиль іконок</button>
-        <div id="style-dropdown" class="hidden">
-          <div class="style-option" data-style="standard">🎰 Стандарт</div>
-          <div class="style-option" data-style="animals">🦁 Звірі</div>
-          <div class="style-option" data-style="crystals">💎 Кристали</div>
-          <div class="style-option" data-style="hearts">❤️ Серця</div>
-          <div class="style-option" data-style="food">🍔 Їжа</div>
-        </div>
+      <button id="style-button" type="button">🎨 Стиль іконок</button>
+      <div id="style-dropdown" class="hidden" aria-hidden="true">
+        <div class="style-option" data-style="standard">🎰 Стандарт</div>
+        <div class="style-option" data-style="animals">🦁 Звірі</div>
+        <div class="style-option" data-style="crystals">💎 Кристали</div>
+        <div class="style-option" data-style="hearts">❤️ Серця</div>
+        <div class="style-option" data-style="food">🍔 Їжа</div>
       </div>
-      
+    </div>
 
+    <div id="slot-container">
+      <div id="slot-grid" aria-live="polite"></div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <div class="balance">Balance: 💎<span id="balance">100000</span></div>
+      </div>
+
+      <div class="controls-center">
+        <div class="bet-control" role="group" aria-label="Ставка">
+          <span class="bet-prefix">Bet:</span>
+          <input id="bet-input" type="number" min="1" step="1" value="100" inputmode="numeric" />
+          <span class="bet-suffix">💎</span>
+        </div>
+        <button id="spin-button" type="button">SPIN (-💎)</button>
+      </div>
+
+      <div class="controls-right">
+        <div class="win">Win: 💎<span id="win-amount">0</span></div>
+      </div>
+    </div>
   </div>
+
+  <!-- Невидима зона наведення для відкриття меню -->
+  <div id="drawer-hover-zone" aria-hidden="true"></div>
+
+  <!-- Кнопка для відкриття правого меню -->
+  <button id="drawer-toggle" type="button" aria-controls="right-drawer" aria-expanded="false">☰ Меню</button>
+
+  <!-- Ліве висувне меню -->
+  <aside id="right-drawer" class="drawer" aria-hidden="true">
+    <nav class="drawer-content" aria-label="Бічне меню">
+      <h3 class="drawer-title">Меню</h3>
+      <ul class="drawer-list">
+        <li class="drawer-item"><button type="button" data-action="profile">💼Мій кабінет💼</button></li>
+        <li class="drawer-item"><button type="button" data-action="topup">💳Поповнення балансу💳</button></li>
+        <li class="drawer-item"><button type="button" data-action="history">📜Історія виграшу📜</button></li>
+        <li class="drawer-item"><button type="button" data-action="support">🛠️Тех. підтримка🛠️</button></li>
+      </ul>
+    </nav>
+    <!-- Ручка-іконка будинку, прив’язана до правого краю шухляди -->
+    <button id="drawer-house" type="button" aria-label="Меню">🏠</button>
+  </aside>
+
+  <!-- Напівпрозорий оверлей -->
+  <div id="drawer-overlay" class="drawer-overlay" hidden></div>
+
   <script src="script.js"></script>
 </body>
+</html>
 </html>
