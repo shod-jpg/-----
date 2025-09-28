@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ук">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Black Jack — LyceumCasinoUa</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="blackjack" style="--bj-bg: url('tableBJ.png');">
+  <!-- PROMPT (оновлено для фото з центровим столом, щоб карти лежали на поверхні)
+  Згенеруй фонове зображення 3D столу блэкджека, центрованого по екрану (~1100x560 px робоча зона), з легким нахилом ~12°.
+  ЗБЕРЕЖИ файл як tableBJ.png (PNG, 2200x1120 для retina).
+  Вирівнювання:
+  - Колода: 50% ширини, 46% висоти (для .bj-deck).
+  - Зона дилера: top ~16% (для .bj-lane.dealer).
+  - Зона гравця: bottom ~12% (для .bj-lane.player).
+  Без написів, темно-зелене сукно, дерев’яний бортик, м’які тіні/відблиски, фотореалістично.
+  -->
+
+  <div class="bj-root">
+    <div class="bj-wrap">
+      <div class="bj-surface">
+        <div class="bj-table"></div>
+
+        <div class="bj-label dealer">Дилер</div>
+        <div class="bj-label player">Гравець</div>
+
+        <div id="bj-deck" class="bj-deck" aria-hidden="true"></div>
+
+        <div class="bj-lane dealer">
+          <div id="dealer-hand" class="bj-hand" aria-live="polite"></div>
+        </div>
+        <div class="bj-lane player">
+          <div id="player-hand" class="bj-hand" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bj-controls">
+      <div class="bet">Ставка: 💎 <input id="bj-bet" type="number" min="1" step="1" value="100" inputmode="numeric"/></div>
+      <button id="bj-deal"   class="bj-btn" type="button">Роздати</button>
+      <button id="bj-hit"    class="bj-btn" type="button" disabled>Взяти</button>
+      <button id="bj-stand"  class="bj-btn" type="button" disabled>Достатньо</button>
+      <button id="bj-double" class="bj-btn" type="button" disabled>Подвоїти</button>
+      <button id="bj-new"    class="bj-btn" type="button" disabled>Нова гра</button>
+    </div>
+
+    <div id="bj-status" class="bj-status"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

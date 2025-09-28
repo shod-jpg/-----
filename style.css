@@ -24,6 +24,12 @@ body[data-page="history"] {
 body[data-page="support"] {
   --page-bg-image: url('Support.png'); /* замінити */
 }
+/* фон для сторінки меню + висота верхнього бару */
+body[data-page="menu"] {
+  --page-bg-image: url('b1.png');
+  --menu-bar-h: 76px; /* більше за слот-бар */
+  padding-top: var(--menu-bar-h) !important;
+}
 
 * { box-sizing: border-box; }
 body {
@@ -41,6 +47,71 @@ body {
   background-position: center;
   background-attachment: fixed;
   padding-top: var(--session-bar-h); /* відсунути контент нижче бару */
+}
+
+/* Верхній бар на сторінці меню */
+#menu-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1200; /* нижче бейджа балансу (1300) */
+  background: linear-gradient(180deg, rgba(10,10,10,0.97), rgba(18,18,18,0.94));
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+  min-height: var(--menu-bar-h);
+}
+#menu-topbar .menu-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+}
+
+/* Аватар зліва */
+.menu-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.18);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+}
+.menu-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.menu-avatar.placeholder {
+  font-size: 26px;
+}
+
+/* Кнопки навігації праворуч від аватарки */
+.menu-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.menu-nav-btn {
+  text-decoration: none;
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: linear-gradient(180deg, #222, #1a1a1a);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.04);
+  letter-spacing: 0.2px;
+}
+.menu-nav-btn:hover {
+  background: linear-gradient(180deg, #2a2a2a, #202020);
 }
 
 .game-container {
@@ -420,6 +491,31 @@ button:active:enabled {
   font-size: 20px;
   font-weight: 800;
   color: #eee;
+  display: block;            /* ensure full-row clickable */
+  text-decoration: none;     /* remove underline */
+  cursor: pointer;
+  padding: 12px 14px;                 /* як у пунктів меню */
+  border: 1px solid rgba(184,134,11,0.35); /* легкий золотий акцент */
+  border-radius: 12px;
+  background: linear-gradient(180deg, #262626, #1e1e1e);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.03);
+  letter-spacing: 0.3px;
+}
+.drawer-title::before {
+  content: "📋";
+  margin-right: 8px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+}
+.drawer-title:hover,
+.drawer-title:focus-visible {
+  background: linear-gradient(180deg, #2c2c2c, #232323);
+  border-color: rgba(218,165,32,0.55);
+  outline: none;
+  text-shadow: 0 1px 6px rgba(255,255,255,0.12);
+}
+.drawer-title:active {
+  background: linear-gradient(180deg, #222, #1a1a1a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.06);
 }
 
 .drawer-list {
@@ -923,6 +1019,385 @@ body[data-page="support"] .support-actions {
   top: 8px;
   right: 12px;
   z-index: 1300;
+}
+
+/* MENU: full-area cards */
+.menu-cards-wrap {
+  height: calc(100vh - var(--menu-bar-h));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;              /* рядки ділять висоту контейнера */
+  gap: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.game-fullcard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.05);
+  display: flex;
+  align-items: flex-end;
+  text-decoration: none;
+  color: #fff;
+  isolation: isolate;
+}
+.game-fullcard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.55) 100%);
+  z-index: 1;
+}
+.game-fullcard img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.85) contrast(1.05);
+  transform: scale(1);
+  transition: transform 250ms ease;
+}
+.game-fullcard:hover img { transform: scale(1.05); }
+
+.game-fullcard .game-meta {
+  position: relative;
+  z-index: 2;
+  padding: 16px 18px;
+  width: 100%;
+  backdrop-filter: blur(0.5px);
+}
+.game-fullcard .game-title {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.game-fullcard .game-desc {
+  margin: 0 0 10px 0;
+  font-weight: 700;
+  opacity: 0.95;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+.game-fullcard .play-cta {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 0 6px rgba(255,255,255,0.05);
+  font-weight: 800;
+}
+
+/* Disabled cards */
+.game-fullcard.disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .menu-cards-wrap { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .menu-cards-wrap { grid-template-columns: 1fr; }
+}
+
+/* === Blackjack page === */
+body[data-page="blackjack"] {
+  --page-bg-image: var(--bj-bg, url('tableBJ.png'));
+  /* use your back image globally for cards/deck */
+  --bj-card-back: url('assets/cards/back.jpg');
+  --bj-table-w: min(1100px, 96vw);
+  --bj-table-h: 560px;
+  --bj-card-w: 86px;
+  --bj-card-h: 124px;
+  --bj-deck-x: 88%;   /* was 50% → right side */
+  --bj-deck-y: 50%;   /* was 46% → vertical center */
+  padding-top: var(--session-bar-h); /* was 0; keep space for the fixed session bar */
+}
+
+/* NEW: a centered stage for table + controls */
+body[data-page="blackjack"] .bj-root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;          /* center horizontally */
+  justify-content: center;      /* center vertically */
+  gap: 12px;
+}
+
+/* table itself — no extra margins, stays centered by the parent */
+body[data-page="blackjack"] .bj-wrap {
+  width: var(--bj-table-w);
+  height: var(--bj-table-h);
+  /* margin was 28px auto 10px; → reset to let parent center it perfectly */
+  margin: 0;
+  position: relative;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  border-radius: 28px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.55);
+  overflow: visible;
+}
+
+/* NEW: common rotated surface so table and cards lie on the same plane */
+body[data-page="blackjack"] .bj-surface {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(12deg);
+  transform-origin: center center;
+}
+
+/* Стол: ледь нахилений, з "бортиком" (імітація 3D) */
+body[data-page="blackjack"] .bj-table {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: radial-gradient(100% 100% at 50% 40%, rgba(0,80,30,0.95), rgba(0,55,20,0.95));
+  box-shadow: inset 0 0 0 10px rgba(60,30,10,0.8), inset 0 0 0 14px rgba(120,70,30,0.45);
+  /* was: transform: rotateX(12deg); → moved to .bj-surface */
+}
+
+/* Зони рук (лежать на поверхні, без додаткового нахилу) */
+.bj-hand {
+  position: relative;
+  min-height: var(--bj-card-h);
+  /* transform: rotateX(12deg);  — прибрано, щоб уникнути стрибка при переміщенні */
+}
+.bj-hand .bj-card.in-hand {
+  position: absolute;
+}
+
+/* Колода (точка старту анімацій) – всередині поверхні */
+.bj-deck {
+  position: absolute;
+  left: var(--bj-deck-x);
+  top: var(--bj-deck-y);
+  width: var(--bj-card-w);
+  height: var(--bj-card-h);
+  transform: translate(-50%,-50%) rotateX(12deg);
+  border-radius: 10px;
+  background: repeating-linear-gradient(45deg, #b00, #b00 6px, #900 6px, #900 12px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+}
+
+/* Карти: 3D, переворот; не додаємо зайвого rotateX (усе задає .bj-surface) */
+.bj-card {
+  width: var(--bj-card-w);
+  height: var(--bj-card-h);
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform 360ms ease;
+  will-change: transform;
+  pointer-events: none;
+  /* no rotateX here */
+}
+
+/* === Blackjack page (images for cards) === */
+/* front/back are now pure image planes */
+.bj-card .front {
+  /* ...existing code... */
+  background: transparent; /* image is inside <img> */
+  display: block;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+}
+.bj-card .back {
+  /* replace solid color with back image via CSS var fallback */
+  background: var(--bj-card-back, url('assets/cards/back.jpg')) center/cover no-repeat;
+  transform: rotateY(180deg);
+}
+/* images inside faces */
+.bj-card .face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* your photos are already card-sized */
+  display: block;
+  border-radius: inherit;
+}
+
+/* deck shows back image too */
+.bj-deck {
+  /* ...existing code... */
+  background: var(--bj-card-back, url('assets/cards/back.jpg')) center/cover no-repeat;
+}
+
+/* remove text parts no longer used on photo cards */
+.bj-card .rank,
+.bj-card .suit,
+.bj-card .pip { display: none; }
+
+/* Анімація "виліт" з колоди у точку (без rotateX у змінних — його дає .bj-surface) */
+@keyframes bjDeal {
+  from { transform: var(--from-tx) rotate(var(--from-rot, 0deg)); opacity: 0.9; }
+  to   { transform: var(--to-tx)   rotate(var(--to-rot, 0deg));   opacity: 1; }
+}
+
+/* Маленькі підказки над зонами */
+.bj-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-weight: 900;
+  opacity: 0.9;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+.bj-label.dealer { top: 10px; }
+.bj-label.player { bottom: 10px; }
+
+/* Адаптив */
+@media (max-width: 760px) {
+  body[data-page="blackjack"] {
+    --bj-card-w: 72px;
+    --bj-card-h: 104px;
+  }
+  /* controls remain centered with flex on mobile */
+}
+.bj-card .pip {
+  align-self: center;
+  justify-self: center;
+  font-size: 44px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+}
+
+/* Стан сорочки (перевернута карта) */
+.bj-card.face-down .inner {
+  transform: rotateY(180deg);
+}
+
+/* Розкладка карт у руці (після приземлення) */
+.bj-hand {
+  position: relative;
+  min-height: var(--bj-card-h);
+  /* transform: rotateX(12deg);  — прибрано, щоб уникнути стрибка при переміщенні */
+}
+.bj-hand .bj-card.in-hand {
+  position: absolute;
+}
+
+/* Панель керування */
+.bj-controls {
+  width: var(--bj-table-w);
+  margin: 12px auto 0;          /* directly under the table */
+  display: flex;                /* was grid */
+  flex-wrap: wrap;
+  justify-content: center;      /* centered buttons */
+  align-items: center;
+  gap: 10px;
+}
+.bj-controls .bet {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-weight: 800;
+}
+.bj-controls .bet input {
+  width: 110px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Status centered below controls */
+.bj-status {
+  width: var(--bj-table-w);
+  text-align: center;
+  font-weight: 900;
+  min-height: 24px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+/* Кнопки в стилі сайту */
+.bj-btn {
+  text-decoration: none;
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(180deg,#222,#1a1a1a);
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+.bj-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Анімація "виліт" з колоди у точку (вектор задаємо inline через transform) */
+@keyframes bjDeal {
+  from { transform: var(--from-tx) rotate(var(--from-rot, 0deg)); opacity: 0.9; }
+  to   { transform: var(--to-tx) rotate(var(--to-rot, 0deg));   opacity: 1; }
+}
+
+/* Маленькі підказки над зонами */
+.bj-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-weight: 900;
+  opacity: 0.9;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+.bj-label.dealer { top: 10px; }
+.bj-label.player { bottom: 10px; }
+
+/* Адаптив */
+@media (max-width: 760px) {
+  body[data-page="blackjack"] {
+    --bj-card-w: 72px;
+    --bj-card-h: 104px;
+  }
+  /* controls remain centered with flex on mobile */
+}
+
+/* Blackjack: flip animation helpers */
+.bj-card .inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 260ms ease; /* smooth flip */
+}
+.bj-card .face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: inherit;
+}
+
+/* Centered hand lanes relative to the table */
+body[data-page="blackjack"] #dealer-hand,
+body[data-page="blackjack"] #player-hand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--bj-card-w) * 6 + 120px); /* lane width for several cards */
+  height: var(--bj-card-h);
+  pointer-events: none; /* hands are anchors only */
+}
+
+/* Dealer: top-center above table */
+body[data-page="blackjack"] #dealer-hand {
+  top: 8%;
+}
+
+/* Player: bottom-center below table */
+body[data-page="blackjack"] #player-hand {
+  bottom: 8%;
 }
 
 
