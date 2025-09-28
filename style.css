@@ -4,6 +4,7 @@
   --cols: 6;
   --rows: 5;
   --icon-scale: 0.82; /* масштаб зображення в клітинці (0..1) */
+  --session-bar-h: 56px; /* фіксована висота верхнього вікна */
 }
 
 /* Персональні фони сторінок (заміни URL-и на свої) */
@@ -39,6 +40,7 @@ body {
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
+  padding-top: var(--session-bar-h); /* відсунути контент нижче бару */
 }
 
 .game-container {
@@ -46,11 +48,72 @@ body {
   padding: 20px;
 }
 
+/* Top session info bar */
+#session-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1100;
+  background: linear-gradient(180deg, rgba(10,10,10,0.95), rgba(20,20,20,0.92));
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  min-height: var(--session-bar-h);
+}
+#session-bar .session-inner {
+  /* ширина на всю сторінку замість центрування */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* контент від лівого краю */
+  min-height: var(--session-bar-h);
+}
+
+/* Потік виграшів (без можливості листання) */
+#session-feed {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  justify-content: flex-start;
+  /* було: overflow-x: auto; → вимикаємо прокрутку */
+  overflow: hidden;
+  scrollbar-width: none;      /* Firefox: сховати скролбар (про всяк випадок) */
+  white-space: nowrap;
+  touch-action: pan-y;        /* заборонити горизонтальний пан, дозволити вертикальний */
+}
+/* Chrome/Safari/Edge: сховати скролбар (про всяк випадок) */
+#session-feed::-webkit-scrollbar {
+  display: none;
+}
+
+.session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(180deg, #222, #1a1a1a);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 4px rgba(255,255,255,0.03);
+  font-weight: 800;
+  font-size: 14px;
+}
+.session-chip img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
+
 /* style menu */
 #icon-style-menu {
   position: fixed;
-  top: 16px;
+  top: calc(var(--session-bar-h) + 16px);
   right: 16px;
+  z-index: 100; /* нижче сесійного бару */
 }
 #style-button {
   background: linear-gradient(135deg,#ffdf00,#ffaa00);
@@ -336,7 +399,7 @@ button:active:enabled {
   box-shadow: 22px 0 40px rgba(0,0,0,0.45);
   transform: translateX(-100%);
   transition: transform 300ms ease;
-  z-index: 1001;
+  z-index: 3000; /* було 1001 — тепер поверх усього (в т.ч. session bar) */
   display: flex;
   flex-direction: column;
 }
@@ -399,7 +462,7 @@ button:active:enabled {
   opacity: 0;
   transition: opacity 200ms ease;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 2990; /* було 1000 — під шухлядою, але над основним контентом */
 }
 .drawer-overlay.active {
   opacity: 1;
@@ -447,7 +510,7 @@ button:active:enabled {
   box-shadow: 18px 0 24px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.04);
   cursor: pointer;
   transition: background 180ms ease, box-shadow 180ms ease;
-  z-index: 2;              
+  z-index: 3001; /* ручка вище за саму шухляду */
 }
 #drawer-house:hover,
 #drawer-house:focus-visible {
@@ -695,6 +758,171 @@ body[data-page="topup"] .msg {
   text-align: center;
   font-weight: 700;
   opacity: 0.95;
+}
+
+/* === History page (glass card like profile) === */
+body[data-page="history"] .history-card {
+  width: min(900px, 92vw);
+  margin: 48px auto 16px;
+  padding: 20px 22px;
+  background: rgba(255,255,255,0.30);
+  border: 2px solid rgba(255,255,255,0.10);
+  border-radius: 24px;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35), inset 0 0 1px rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+body[data-page="history"] .history-title {
+  display: inline-block;
+  margin: 0 auto 16px;
+  padding: 8px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.20);
+  backdrop-filter: inherit;
+  -webkit-backdrop-filter: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+body[data-page="history"] .history-list {
+  display: grid;
+  grid-auto-rows: minmax(40px, auto);
+  gap: 8px;
+  max-height: 60vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+/* Header + rows */
+body[data-page="history"] .history-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr 2fr 0.7fr; /* Ставка | Виграш | Комбінація | × */
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 0 1px rgba(255,255,255,0.15);
+  font-weight: 700;
+}
+
+body[data-page="history"] .history-row.header {
+  background: rgba(87, 121, 134, 0.534);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  backdrop-filter: blur(2px);
+}
+
+body[data-page="history"] .history-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body[data-page="history"] .history-cell.center { text-align: center; }
+
+body[data-page="history"] .history-actions {
+  margin-top: 14px;
+  text-align: center;
+}
+body[data-page="history"] .btn-back {
+  text-decoration: none;
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.20);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.06);
+}
+
+/* мале зображення-іконка для комбінації в історії */
+body[data-page="history"] .history-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+}
+
+/* === Support page (glass card) === */
+body[data-page="support"] .support-card {
+  width: min(900px, 92vw);
+  margin: 48px auto 16px;
+  padding: 20px 22px;
+  background: rgba(255,255,255,0.30);
+  border: 2px solid rgba(255,255,255,0.10);
+  border-radius: 24px;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35), inset 0 0 1px rgba(255,255,255,0.25);
+  color: #000000;
+}
+body[data-page="support"] .support-title {
+  display: inline-block;
+  margin: 0 auto 16px;
+  padding: 8px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.20);
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+}
+body[data-page="support"] .support-section {
+  margin: 12px 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.14);
+}
+body[data-page="support"] .support-subtitle {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+body[data-page="support"] .support-text {
+  margin: 0;
+  font-weight: 700;
+  opacity: 0.95;
+}
+
+body[data-page="support"] .support-link {
+  text-decoration: none;
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.20);
+  color: #000000;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 0 6px rgba(255,255,255,0.06);
+}
+body[data-page="support"] .support-link:hover {
+  background: rgba(255,255,255,0.26);
+}
+body[data-page="support"] .support-link.ghost {
+  background: rgba(255,255,255,0.12);
+}
+body[data-page="support"] .support-actions {
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* Fixed balance badge for non-index pages (top-right) */
+.page-balance-fixed {
+  position: fixed;
+  top: 8px;
+  right: 12px;
+  z-index: 1300;
 }
 
 

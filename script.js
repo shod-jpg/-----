@@ -58,6 +58,47 @@ const SPIN_DURATION = 3000; // 3 секунди
 let isSpinning = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  const page = document.body?.dataset?.page;
+
+  if (page === 'history') {
+    ensureGlobalBalanceBadge(); // NEW: show balance top-right
+    // Render history list
+    const list = document.getElementById('history-list');
+    if (list) {
+      list.innerHTML = '';
+      const header = document.createElement('div');
+      header.className = 'history-row header';
+      header.innerHTML = `
+        <div class="history-cell">Ставка</div>
+        <div class="history-cell">Виграш</div>
+        <div class="history-cell">Комбінація</div>
+        <div class="history-cell center">×</div>
+      `;
+      list.appendChild(header);
+
+      const data = loadWinHistory();
+      data.slice().reverse().forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'history-row';
+        row.innerHTML = `
+          <div class="history-cell">💎${it.bet}</div>
+          <div class="history-cell">💎${it.win}</div>
+          <div class="history-cell">${it.comboHtml || it.combo || ''}</div>
+          <div class="history-cell center">x${it.mult}</div>
+        `;
+        list.appendChild(row);
+      });
+    }
+    return;
+  }
+
+  // нове: ігноруємо всі не-індексні сторінки (наприклад, support)
+  if (page !== 'index') {
+    ensureGlobalBalanceBadge(); // NEW: show balance top-right
+    return;
+  }
+
+  // === Index page logic ===
   const styleButton = document.getElementById('style-button');
   const styleDropdown = document.getElementById('style-dropdown');
   const styleOptions = document.querySelectorAll('.style-option');
@@ -73,6 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const drawerOverlay = document.getElementById('drawer-overlay');
   const hoverZone = document.getElementById('drawer-hover-zone');
   const houseBtn = document.getElementById('drawer-house');
+
+  // Session bar elements
+  const sessionFeedEl = document.getElementById('session-feed');
 
   // ensure hidden at start
   styleDropdown.classList.add('hidden');
@@ -133,66 +177,61 @@ document.addEventListener('DOMContentLoaded', () => {
     return el ? el.dataset.symbol || null : null;
   }
 
+  // Extend: return mult/kind/len/sym
   function checkMatches() {
     const multipliers = { 2: 0.25, 3: 0.5, 4: 1.25, 5: 3, 6: 20 };
-    let best = { mult: 0, cells: [] };
+    let best = { mult: 0, cells: [], kind: null, len: 0, sym: null };
 
-    // горизонталі
+    // rows
     for (let r = 0; r < rows; r++) {
-      let count = 1;
-      let seq = [{ r, c: 0 }];
+      let count = 1, seq = [{ r, c: 0 }];
       for (let c = 1; c < cols; c++) {
-        if (getSymbolIdAt(r, c) === getSymbolIdAt(r, c - 1)) {
-          count++; seq.push({ r, c });
-        } else {
+        if (getSymbolIdAt(r, c) === getSymbolIdAt(r, c - 1)) { count++; seq.push({ r, c }); }
+        else {
           if (count >= 2) {
             const mult = multipliers[count] || 0;
-            if (mult > best.mult) best = { mult, cells: seq.slice() };
+            if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'row', len: count, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
           }
           count = 1; seq = [{ r, c }];
         }
       }
       if (count >= 2) {
         const mult = multipliers[count] || 0;
-        if (mult > best.mult) best = { mult, cells: seq.slice() };
+        if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'row', len: count, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
       }
     }
 
-    // вертикалі
+    // cols
     for (let c = 0; c < cols; c++) {
-      let count = 1;
-      let seq = [{ r: 0, c }];
+      let count = 1, seq = [{ r: 0, c }];
       for (let r = 1; r < rows; r++) {
-        if (getSymbolIdAt(r, c) === getSymbolIdAt(r - 1, c)) {
-          count++; seq.push({ r, c });
-        } else {
+        if (getSymbolIdAt(r, c) === getSymbolIdAt(r - 1, c)) { count++; seq.push({ r, c }); }
+        else {
           if (count >= 2) {
             const mult = multipliers[count] || 0;
-            if (mult > best.mult) best = { mult, cells: seq.slice() };
+            if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'col', len: count, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
           }
           count = 1; seq = [{ r, c }];
         }
       }
       if (count >= 2) {
         const mult = multipliers[count] || 0;
-        if (mult > best.mult) best = { mult, cells: seq.slice() };
+        if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'col', len: count, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
       }
     }
 
-    // діагоналі \ (r - c = const)
+    // diag \
     for (let k = -(cols - 2); k <= rows - 2; k++) {
-      let seq = [];
-      let prev = null;
+      let seq = [], prev = null;
       for (let r = 0; r < rows; r++) {
         const c = r - k;
         if (c < 0 || c >= cols) continue;
         const sym = getSymbolIdAt(r, c);
-        if (prev === null || sym === prev) {
-          seq.push({ r, c });
-        } else {
+        if (prev === null || sym === prev) { seq.push({ r, c }); }
+        else {
           if (seq.length >= 2) {
             const mult = multipliers[seq.length] || 0;
-            if (mult > best.mult) best = { mult, cells: seq.slice() };
+            if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'diag\\', len: seq.length, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
           }
           seq = [{ r, c }];
         }
@@ -200,24 +239,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (seq.length >= 2) {
         const mult = multipliers[seq.length] || 0;
-        if (mult > best.mult) best = { mult, cells: seq.slice() };
+        if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'diag\\', len: seq.length, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
       }
     }
 
-    // діагоналі / (r + c = const)
+    // diag /
     for (let s = 1; s <= rows + cols - 3; s++) {
-      let seq = [];
-      let prev = null;
+      let seq = [], prev = null;
       for (let r = 0; r < rows; r++) {
         const c = s - r;
         if (c < 0 || c >= cols) continue;
         const sym = getSymbolIdAt(r, c);
-        if (prev === null || sym === prev) {
-          seq.push({ r, c });
-        } else {
+        if (prev === null || sym === prev) { seq.push({ r, c }); }
+        else {
           if (seq.length >= 2) {
             const mult = multipliers[seq.length] || 0;
-            if (mult > best.mult) best = { mult, cells: seq.slice() };
+            if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'diag/', len: seq.length, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
           }
           seq = [{ r, c }];
         }
@@ -225,12 +262,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (seq.length >= 2) {
         const mult = multipliers[seq.length] || 0;
-        if (mult > best.mult) best = { mult, cells: seq.slice() };
+        if (mult > best.mult) best = { mult, cells: seq.slice(), kind: 'diag/', len: seq.length, sym: getSymbolIdAt(seq[0].r, seq[0].c) };
       }
     }
 
     return {
       win: best.mult > 0 ? Math.floor(currentBet * best.mult) : 0,
+      mult: best.mult, kind: best.kind, len: best.len, sym: best.sym,
       cells: best.cells
     };
   }
@@ -393,6 +431,32 @@ document.addEventListener('DOMContentLoaded', () => {
           balance += result.win;
           winDisplay.textContent = result.win;
           updateDisplay();
+
+          // Побудувати chip: [іконка] 💎win · xmult
+          let iconSrc = '';
+          const firstCell = result.cells[0];
+          if (firstCell) {
+            const idx0 = firstCell.r * cols + firstCell.c;
+            const node0 = slotGrid.children[idx0];
+            const img0 = node0?.querySelector('img.icon-img');
+            iconSrc = img0?.src || '';
+          }
+          if (sessionFeedEl) {
+            const chip = document.createElement('div');
+            chip.className = 'session-chip';
+            chip.innerHTML = `
+              ${iconSrc ? `<img src="${iconSrc}" alt="icon">` : ''}
+              <span>💎${result.win}</span>
+              <span>·</span>
+              <span>x${result.mult ?? 0}</span>
+            `;
+            // Нові виграші зліва — додаємо на початок
+            sessionFeedEl.prepend(chip);
+          }
+
+          // Зберегти у історію (з іконкою)
+          const comboHtml = `${iconSrc ? `<img class="history-icon" src="${iconSrc}" alt="${result.sym || 'icon'}"> ` : ''}${kindLabel(result.kind)} ${result.len}`;
+          addWinToHistory({ bet: currentBet, win: result.win, comboHtml, mult: result.mult });
         } else {
           winDisplay.textContent = 0;
           clearHighlights();
@@ -432,5 +496,52 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDisplay();
   createGrid();
 });
+
+// === Win history helpers (shared) ===
+function loadWinHistory() {
+  try { return JSON.parse(localStorage.getItem('winHistory') || '[]'); } catch { return []; }
+}
+function saveWinHistory(arr) {
+  try { localStorage.setItem('winHistory', JSON.stringify(arr.slice(-25))); } catch {}
+}
+function addWinToHistory(entry) {
+  const arr = loadWinHistory();
+  arr.push({ ...entry, ts: Date.now() });
+  saveWinHistory(arr);
+}
+function kindLabel(kind) {
+  switch (kind) {
+    case 'row': return 'ряд';
+    case 'col': return 'стовп';
+    case 'diag\\': return 'діагональ ↘';
+    case 'diag/': return 'діагональ ↗';
+    default: return 'комбінація';
+  }
+}
+
+// === Global balance badge helpers (shared) ===
+function getStoredBalance() {
+  try {
+    const raw = localStorage.getItem('balance');
+    const val = raw !== null ? Math.floor(Number(raw)) : NaN;
+    return Number.isFinite(val) && val >= 0 ? val : 0;
+  } catch {
+    return 0;
+  }
+}
+function ensureGlobalBalanceBadge() {
+  const current = getStoredBalance();
+  let badge = document.getElementById('global-balance-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'global-balance-badge';
+    badge.className = 'balance page-balance-fixed';
+    badge.innerHTML = `Balance: 💎<span id="global-balance-value">${current}</span>`;
+    document.body.appendChild(badge);
+  } else {
+    const span = badge.querySelector('#global-balance-value');
+    if (span) span.textContent = String(current);
+  }
+}
 
 

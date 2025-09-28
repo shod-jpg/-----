@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-page="index">
+  <!-- Session wins top bar -->
+  <div id="session-bar" role="region" aria-label="Інфо по виграшам за сеанс">
+    <div class="session-inner">
+      <!-- НОВЕ: потік виграшів (нові елементи додаються зліва) -->
+      <div id="session-feed" aria-live="polite" aria-atomic="false">
+        <!-- chips will be prepended here -->
+      </div>
+    </div>
+  </div>
   <div class="game-container">
     <div id="icon-style-menu">
       <button id="style-button" type="button">🎨 Стиль іконок</button>
@@ -69,5 +78,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
 </html>

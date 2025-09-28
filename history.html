@@ -8,9 +8,16 @@
 </head>
 <body data-page="history">
   <div class="game-container">
-    <h1>Історія виграшу</h1>
-    <p>Список останніх виграшів (макет сторінки).</p>
-    <p><a href="index.html">⬅️ На головну</a></p>
+    <div class="history-card">
+      <div class="history-title">Історія виграшів (останні 25)</div>
+      <div class="history-list" id="history-list">
+        <!-- Рендериться скриптом -->
+      </div>
+      <div class="history-actions">
+        <a class="btn-back" href="index.html">⬅️ На головну</a>
+      </div>
+    </div>
   </div>
+  <script src="script.js"></script>
 </body>
 </html>
