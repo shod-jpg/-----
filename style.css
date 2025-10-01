@@ -5,6 +5,7 @@
   --rows: 5;
   --icon-scale: 0.82; /* масштаб зображення в клітинці (0..1) */
   --session-bar-h: 56px; /* фіксована висота верхнього вікна */
+  --slot-gap: 12px; /* новий: відступ між слотами */
 }
 
 /* Персональні фони сторінок (заміни URL-и на свої) */
@@ -242,8 +243,7 @@ body {
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell-size));
   grid-template-rows: repeat(var(--rows), var(--cell-size));
-  
-  gap: 12px;
+  gap: var(--slot-gap);                 /* використання змінної для відступів */
   border-radius: 12px;
 }
 .slot-cell {
@@ -1021,6 +1021,11 @@ body[data-page="support"] .support-actions {
   z-index: 1300;
 }
 
+/* Blackjack: place the fixed balance badge below the session bar */
+body[data-page="blackjack"] .page-balance-fixed {
+  top: calc(var(--session-bar-h) + 8px);
+}
+
 /* MENU: full-area cards */
 .menu-cards-wrap {
   height: calc(100vh - var(--menu-bar-h));
@@ -1399,5 +1404,356 @@ body[data-page="blackjack"] #dealer-hand {
 body[data-page="blackjack"] #player-hand {
   bottom: 8%;
 }
+
+/* === Rocket: cartoon stick that connects rocket and X-scale === */
+body[data-page="rocket"] #rocket-stick {
+  position: absolute;
+  left: 0; top: 0; /* will be placed via transform */
+  height: 10px;
+  width: 0;                     /* dynamic */
+  transform-origin: 0 50%;      /* grow from left endpoint */
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 1;                   /* behind rocket sprite */
+  opacity: 0;                   /* shown by script */
+  transition: opacity 160ms ease;
+
+  /* cartoon wood look */
+  background:
+    radial-gradient(circle at 10px 50%, rgba(0,0,0,0.12), transparent 14px),
+    repeating-linear-gradient(
+      90deg,
+      #7a4f1a 0px,   #7a4f1a 10px,
+      #6e4617 10px,  #6e4617 18px,
+      #7f541e 18px,  #7f541e 24px
+    );
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.18);
+  border: 2px solid rgba(55,35,12,0.55);
+}
+
+/* optional tiny wobble for fun on hover-capable devices */
+@media (hover:hover) {
+  body[data-page="rocket"] #rocket-stick {
+    animation: stickSubtle 2200ms ease-in-out infinite;
+  }
+  @keyframes stickSubtle {
+    0%, 100% { filter: none; }
+    50% { filter: saturate(1.02) brightness(1.02); }
+  }
+}
+
+/* Responsive: phones/tablets (menu/topbar, session bar, slots) */
+@media (max-width: 768px) {
+  :root {
+    --session-bar-h: 50px;
+    --slot-gap: 10px; /* новий: трохи менший відступ на планшетах */
+  }
+
+  #menu-topbar .menu-bar-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+  .menu-avatar { width: 44px; height: 44px; }
+  .menu-bar-actions {
+    flex: 1 1 100%;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .menu-nav-btn {
+    padding: 8px 10px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  /* Slots: smaller grid and vertical controls */
+  :root { --cell-size: 78px; --icon-scale: 0.8; }
+  #slot-grid { gap: var(--slot-gap); }
+  .controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .controls-left, .controls-right { justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  :root { --session-bar-h: 44px; }
+
+  .menu-nav-btn { padding: 7px 9px; font-size: 13px; }
+  /* Slots: ensure 6 cols fit the viewport on phones */
+  body[data-page="index"] .game-container { padding: 10px 8px; } /* reduce outer padding */
+  body[data-page="index"] #slot-container {
+    width: calc(100vw - 16px);  /* viewport minus small gutter */
+    padding: 12px;              /* was 18px */
+    border-width: 4px;          /* was 6px */
+  }
+  body[data-page="index"] {
+    --slot-gap: 6px;            /* tighter gaps on phones */
+    /* cell size computed to fit: vw - (container pads/borders) - gaps, divided by cols */
+    --cell-size: calc((100vw - 48px - (var(--cols) - 1) * var(--slot-gap)) / var(--cols));
+    --icon-scale: 0.78;
+  }
+  body[data-page="index"] #slot-grid { gap: var(--slot-gap); }
+}
+
+/* Blackjack: mobile-friendly table, card sizes, spacing passed to JS */
+body[data-page="blackjack"] {
+  /* defaults are set earlier; override on smaller screens */
+  --bj-card-gap: 28px;   /* used by JS for horizontal spacing */
+  --bj-lane-pad: 20px;   /* used by JS as left pad per lane */
+}
+@media (max-width: 900px) {
+  body[data-page="blackjack"] {
+    --bj-table-w: min(96vw, 720px);
+    --bj-table-h: 480px;
+    --bj-card-w: 78px;
+    --bj-card-h: 112px;
+    --bj-deck-x: 86%;
+    --bj-deck-y: 50%;
+    --bj-card-gap: 22px;
+    --bj-lane-pad: 14px;
+  }
+}
+@media (max-width: 640px) {
+  body[data-page="blackjack"] {
+    --bj-table-w: 96vw;
+    --bj-table-h: 420px;
+    --bj-card-w: 68px;
+    --bj-card-h: 98px;
+    --bj-deck-x: 84%;
+    --bj-deck-y: 50%;
+    --bj-card-gap: 18px;
+    --bj-lane-pad: 10px;
+  }
+}
+@media (max-width: 420px) {
+  body[data-page="blackjack"] {
+    --bj-table-w: 98vw;
+    --bj-table-h: 380px;
+    --bj-card-w: 60px;
+    --bj-card-h: 88px;
+    --bj-deck-x: 82%;
+    --bj-deck-y: 50%;
+    --bj-card-gap: 16px;
+    --bj-lane-pad: 8px;
+  }
+}
+
+/* Ensure blackjack controls don’t overflow on mobile */
+@media (max-width: 640px) {
+  .bj-controls {
+    padding: 0 8px;
+    gap: 8px;
+  }
+  .bj-controls .bet { padding: 8px 10px; }
+  .bj-btn { padding: 10px 14px; border-radius: 12px; }
+}
+
+/* === Rocket layout and controls === */
+body[data-page="rocket"] .rocket-page {
+  width: min(1200px, 96vw);
+  margin: calc(var(--session-bar-h)) auto 12px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 820px) {
+  body[data-page="rocket"] .rocket-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+body[data-page="rocket"] #rocket-stage {
+  position: relative;
+  height: 520px;
+  border-radius: 16px;
+  background: url('rbg.png') center/cover no-repeat; /* use provided background */
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 30px rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+
+/* X scale on the right */
+body[data-page="rocket"] #x-scale {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  bottom: 12px;
+  width: 64px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.35);
+}
+body[data-page="rocket"] #x-scale-inner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px; /* anchored to bottom; script moves translateY */
+}
+body[data-page="rocket"] #x-scale .x-tick {
+  position: absolute;
+  left: 10px;
+  width: 18px;
+  height: 2px;
+  background: rgba(255,255,255,0.45);
+  opacity: 0.6;
+}
+body[data-page="rocket"] #x-scale .x-tick.major {
+  width: 28px;
+  height: 3px;
+  background: rgba(255,255,255,0.9);
+}
+body[data-page="rocket"] #x-scale .x-label {
+  position: absolute;
+  right: 8px;
+  transform: translateY(50%);
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+/* Rocket sprite/explosion placeholders (provide your own images if needed) */
+body[data-page="rocket"] #rocket-sprite,
+body[data-page="rocket"] #rocket-explosion {
+  position: absolute;
+  left: 40%;
+  top: 84%;
+  width: 90px;
+  height: 90px;
+  transform: translateX(-50%) translateY();
+  background: radial-gradient(circle at 50% 60%, #bbb, #777);
+  border-radius: 50%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+body[data-page="rocket"] #rocket-sprite {            /* moved by script */
+  width: 100px;                /* tweak size if needed */
+  height: 100px;
+  background: url('assets/rocket/rocket.png') center/contain no-repeat; /* was gradient placeholder */
+  border-radius: 0;            /* image sprite, not a circle */
+  z-index: 2;                  /* above stick */
+  box-shadow: none;            /* remove placeholder shadow */
+}
+body[data-page="rocket"] #rocket-explosion {
+  width: 160px;                /* bigger than rocket for effect */
+  height: 160px;
+  background: url('assets/rocket/explosion.gif') center/contain no-repeat; /* was gradient placeholder */
+  border-radius: 0;
+  z-index: 3;                  /* above rocket */
+  box-shadow: none;
+  pointer-events: none;        /* purely visual */
+}
+
+body[data-page="rocket"] .rocket-hud {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: grid;
+  gap: 8px;
+}
+body[data-page="rocket"] #rocket-mult {
+  font-weight: 900;
+  font-size: 28px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+body[data-page="rocket"] #rocket-status,
+body[data-page="rocket"] .last-crash {
+  font-weight: 800;
+  opacity: 0.95;
+}
+
+/* Controls panel */
+body[data-page="rocket"] .rocket-controls {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(180deg, rgba(20,20,20,0.55), rgba(12,12,12,0.55));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35), inset 0 0 12px rgba(255,255,255,0.04);
+}
+
+/* Base: ensure safe-area padding for bottom controls on modern phones */
+body[data-page="rocket"] .rocket-controls {
+  /* ...existing code... */
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+/* Tablets/phones: stack layout + smaller stage and scale */
+@media (max-width: 820px) {
+  body[data-page="rocket"] .rocket-page { gap: 10px; }
+  body[data-page="rocket"] #rocket-stage { height: min(60vh, 460px); }
+  body[data-page="rocket"] #x-scale { width: 56px; right: 8px; }
+  body[data-page="rocket"] #x-scale .x-label { font-size: 11px; }
+
+  /* Center rocket on smaller screens and shrink a bit */
+  body[data-page="rocket"] #rocket-sprite { left: 50%; width: 84px; height: 84px; }
+  body[data-page="rocket"] #rocket-explosion { width: 140px; height: 140px; }
+
+  /* Controls: two buttons per row, larger tap targets */
+  body[data-page="rocket"] .control-rows { grid-template-columns: 1fr; }
+  body[data-page="rocket"] .control-stack { grid-template-columns: 1fr 1fr; gap: 10px; }
+  body[data-page="rocket"] .rocket-controls button {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* X-history spacing */
+  body[data-page="rocket"] #rocket-x-history { padding-top: 6px; gap: 8px; }
+  body[data-page="rocket"] .xchip { font-size: 13px; padding: 5px 9px; }
+}
+
+/* Phones: tighter scale, smaller sprite, compact labels/buttons */
+@media (max-width: 480px) {
+  body[data-page="rocket"] #rocket-stage { height: min(58vh, 420px); }
+  body[data-page="rocket"] #x-scale { width: 50px; right: 6px; }
+  body[data-page="rocket"] #x-scale .x-label { font-size: 10px; }
+
+  body[data-page="rocket"] #rocket-sprite { width: 76px; height: 76px; }
+  body[data-page="rocket"] #rocket-explosion { width: 120px; height: 120px; }
+
+  body[data-page="rocket"] .rocket-controls { padding: 10px; gap: 10px; }
+  body[data-page="rocket"] .control-stack { grid-template-columns: 1fr 1fr; gap: 8px; }
+  body[data-page="rocket"] .rocket-controls button { font-size: 14px; }
+}
+body[data-page="rocket"] #rocket-cashout:disabled {
+  background: #555; color: #ddd;
+}
+
+/* Rocket: x-only history under bet field */
+body[data-page="rocket"] #rocket-x-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+  padding-top: 4px;
+}
+body[data-page="rocket"] .xchip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 0 4px rgba(255,255,255,0.04);
+  color: #111;
+}
+/* Colors by ranges */
+body[data-page="rocket"] .xchip.red      { background: linear-gradient(180deg, #ff6b6b, #ff3b3b); color:#fff; }
+body[data-page="rocket"] .xchip.gray     { background: linear-gradient(180deg, #d7d7d7, #bdbdbd); color:#111; }
+body[data-page="rocket"] .xchip.yellow   { background: linear-gradient(180deg, #ffe27a, #ffd24d); color:#1a1400; }
+body[data-page="rocket"] .xchip.green    { background: linear-gradient(180deg, #5ee387, #2ecc71); color:#0b1a0f; }
+body[data-page="rocket"] .xchip.violet   { background: linear-gradient(180deg, #b07cff, #9146ff); color:#fff; }
 
 

@@ -1,6 +1,4 @@
 const iconSets = {
-  // Заміни шляхи на свої фото (png/jpg/webp). Зручно скласти по папках:
-  // c:\Users\user\Desktop\казино\assets\icons\<set>\*.png
   standard: [
     { id: 'std1', src: 'assets/icons/standard/01.png' },
     { id: 'std2', src: 'assets/icons/standard/02.png' },
@@ -53,19 +51,17 @@ const rows = 5;
 const cols = 6;
 const spinCost = 100;
 let balance = 100000;
-let currentBet = 100; // поточна ставка (буде оновлюватись з поля)
-const SPIN_DURATION = 3000; // 3 секунди
+let currentBet = 100;
+const SPIN_DURATION = 3000;
 let isSpinning = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const page = document.body?.dataset?.page;
 
-  // NEW: track internal link clicks to remember the previous page
   enablePrevPageTracking();
 
   if (page === 'history') {
     ensureGlobalBalanceBadge();
-    // Render history list
     const list = document.getElementById('history-list');
     if (list) {
       list.innerHTML = '';
@@ -92,48 +88,45 @@ document.addEventListener('DOMContentLoaded', () => {
         list.appendChild(row);
       });
     }
-    installBackLinks(); // ensure back works here
+    installBackLinks();
     return;
   }
 
-  // NEW: Profile — capture avatar URL for reuse on the menu page
   if (page === 'profile') {
     ensureGlobalBalanceBadge();
     captureProfileAvatar();
-    installBackLinks(); // ensure back works here
+    installBackLinks();
     return;
   }
 
-  // Меню: показати баланс і підставити аватар
   if (page === 'menu') {
     ensureGlobalBalanceBadge();
     ensureMenuAvatar();
-    // installBackLinks(); // прибрано, щоб не перезаписувати посилання карток ігор
+    ensureDynamicMenuTopbar();
     return;
   }
 
-  // NEW: Blackjack page
+  if (page === 'rocket') {
+    ensureGlobalBalanceBadge();
+    ensureDrawerForBlackjack();
+    initRocket();
+    return;
+  }
+
   if (page === 'blackjack') {
     ensureGlobalBalanceBadge();
-
-    // NEW: add top session bar like on index
     ensureSessionBar();
-
-    // NEW: add left drawer like on index
     ensureDrawerForBlackjack();
-
     initBlackjack();
     return;
   }
 
-  // нове: ігноруємо всі не-індексні сторінки (наприклад, support)
   if (page !== 'index') {
     ensureGlobalBalanceBadge();
-    installBackLinks(); // ensure back works on other pages (e.g., topup, support)
+    installBackLinks();
     return;
   }
 
-  // === Index page logic ===
   const styleButton = document.getElementById('style-button');
   const styleDropdown = document.getElementById('style-dropdown');
   const styleOptions = document.querySelectorAll('.style-option');
@@ -143,20 +136,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const winDisplay = document.getElementById('win-amount');
   const betInput = document.getElementById('bet-input');
 
-  // Drawer elements
   const drawer = document.getElementById('right-drawer');
   const drawerToggle = document.getElementById('drawer-toggle');
   const drawerOverlay = document.getElementById('drawer-overlay');
   const hoverZone = document.getElementById('drawer-hover-zone');
   const houseBtn = document.getElementById('drawer-house');
 
-  // Session bar elements
   const sessionFeedEl = document.getElementById('session-feed');
 
-  // ensure hidden at start
   styleDropdown.classList.add('hidden');
 
-  // зчитати баланс з localStorage (якщо є)
   function loadBalanceFromStorage() {
     try {
       const raw = localStorage.getItem('balance');
@@ -170,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadBalanceFromStorage();
 
-  // ініціалізуємо значення поля
   if (betInput) betInput.value = currentBet;
 
   function getRandomSymbol() {
@@ -212,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return el ? el.dataset.symbol || null : null;
   }
 
-  // Extend: return mult/kind/len/sym
   function checkMatches() {
     const multipliers = { 2: 0.25, 3: 0.5, 4: 1.25, 5: 3, 6: 20 };
     let best = { mult: 0, cells: [], kind: null, len: 0, sym: null };
@@ -308,15 +295,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // toggle menu
   styleButton.addEventListener('click', () => {
     styleDropdown.classList.toggle('hidden');
   });
 
-  // select style -> apply and close
   styleOptions.forEach(opt => {
     opt.addEventListener('click', () => {
-      if (isSpinning) return; // не змінюємо стиль під час обертання
+      if (isSpinning) return;
       const s = opt.getAttribute('data-style');
       if (s && iconSets[s]) currentSymbols = iconSets[s];
       styleDropdown.classList.add('hidden');
@@ -324,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Drawer helpers
   function setDrawer(open) {
     if (!drawer) return;
     if (open) {
@@ -335,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawerOverlay.hidden = false;
         drawerOverlay.classList.add('active');
       }
-      // сховати меню стилів, якщо відкрите
       styleDropdown.classList.add('hidden');
     } else {
       drawer.classList.remove('open');
@@ -343,13 +326,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (drawerToggle) drawerToggle.setAttribute('aria-expanded', 'false');
       if (drawerOverlay) {
         drawerOverlay.classList.remove('active');
-        // невелика пауза, щоб анімація згасання відпрацювала
         setTimeout(() => { if (drawerOverlay && !drawer.classList.contains('open')) drawerOverlay.hidden = true; }, 200);
       }
     }
   }
 
-  // Hover logic to open/close by moving cursor to the left edge
   let hoverCloseTimeout = null;
   let isOverZone = false;
   let isOverDrawer = false;
@@ -412,20 +393,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') setDrawer(false);
   });
 
-  // Optional: close drawer when clicking any drawer item (link or button)
   drawer?.addEventListener('click', (e) => {
     const item = e.target.closest('.drawer-item a, .drawer-item button');
     if (item) setDrawer(false);
   });
 
-  // запуск анімації обертання слотів на duration мс
   function startSpinAnimation(durationMs = SPIN_DURATION) {
     clearHighlights();
     winDisplay.textContent = 0;
 
     slotGrid.classList.add('is-spinning');
 
-    // змінюємо зображення по колонках на різних швидкостях
     const intervalIds = [];
     for (let c = 0; c < cols; c++) {
       const speed = 60 + c * 20;
@@ -447,7 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
       intervalIds.forEach(clearInterval);
       slotGrid.classList.remove('is-spinning');
 
-      // фінальна сітка (перемалюємо, щоб зафіксувати стан)
       createGrid();
 
       setTimeout(() => {
@@ -467,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
           winDisplay.textContent = result.win;
           updateDisplay();
 
-          // Побудувати chip: [іконка] 💎win · xmult
           let iconSrc = '';
           const firstCell = result.cells[0];
           if (firstCell) {
@@ -485,11 +461,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <span>·</span>
               <span>x${result.mult ?? 0}</span>
             `;
-            // Нові виграші зліва — додаємо на початок
             sessionFeedEl.prepend(chip);
           }
 
-          // Зберегти у історію (з іконкою)
           const comboHtml = `${iconSrc ? `<img class="history-icon" src="${iconSrc}" alt="${result.sym || 'icon'}"> ` : ''}${kindLabel(result.kind)} ${result.len}`;
           addWinToHistory({ bet: currentBet, win: result.win, comboHtml, mult: result.mult });
         } else {
@@ -504,7 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, durationMs);
   }
 
-  // ОНОВЛЕННЯ: обробник кнопки SPIN - з 3-секундною анімацією
   spinButton.addEventListener('click', () => {
     if (isSpinning) return;
 
@@ -523,16 +496,13 @@ document.addEventListener('DOMContentLoaded', () => {
     spinButton.disabled = true;
     if (betInput) betInput.disabled = true;
 
-    // розпочинаємо 3-секундну анімацію
     startSpinAnimation(SPIN_DURATION);
   });
 
-  // initial render
   updateDisplay();
   createGrid();
 });
 
-// === Win history helpers (shared) ===
 function loadWinHistory() {
   try { return JSON.parse(localStorage.getItem('winHistory') || '[]'); } catch { return []; }
 }
@@ -554,7 +524,6 @@ function kindLabel(kind) {
   }
 }
 
-// === Global balance badge helpers (shared) ===
 function getStoredBalance() {
   try {
     const raw = localStorage.getItem('balance');
@@ -594,7 +563,6 @@ function ensureMenuAvatar() {
   }
 }
 
-// NEW: Save avatar URL from profile.html into localStorage
 function captureProfileAvatar() {
   const img = document.querySelector('.profile-avatar img');
   const src = img?.src || '';
@@ -603,7 +571,6 @@ function captureProfileAvatar() {
   }
 }
 
-// NEW: compute back target URL (prefer referrer, then sessionStorage, then menu.html)
 function computeBackHref() {
   let target = '';
   try {
@@ -623,22 +590,19 @@ function computeBackHref() {
   return target;
 }
 
-// NEW: bind “На головну” links/buttons to go back
 function installBackLinks() {
   const backHref = computeBackHref();
   const nodes = document.querySelectorAll('a, button');
   const candidates = Array.from(nodes).filter(el => {
     if (el.dataset.backBound === '1') return false;
-    // не чіпаємо картки ігор у меню
     if (el.classList?.contains('game-fullcard')) return false;
     if (el.closest?.('.menu-cards-wrap')) return false;
 
-    // common classes/text
     if (el.classList.contains('btn-back')) return true;
-    if (el.matches('.btn, .topup-btn')) return true;           // NEW: profile/topup buttons
-    if (isAnchorToIndex(el)) return true;                       // NEW: any anchor to index.html
+    if (el.matches('.btn, .topup-btn')) return true;
+    if (isAnchorToIndex(el)) return true;
     const txt = (el.textContent || '').trim();
-    return /На головну/i.test(txt);                             // text fallback
+    return /На головну/i.test(txt);
   });
 
   candidates.forEach(el => {
@@ -657,11 +621,9 @@ function installBackLinks() {
     });
   });
 
-  // keep a fallback reference for pages reached without referrer (e.g., opened directly)
   try { sessionStorage.setItem('prevUrl', location.href); } catch {}
 }
 
-// NEW: remember current page before navigating to any same-origin link
 function enablePrevPageTracking() {
   document.addEventListener('click', (e) => {
     const a = e.target?.closest && e.target.closest('a[href]');
@@ -677,7 +639,6 @@ function enablePrevPageTracking() {
   }, true);
 }
 
-// NEW: check if element is an anchor that points to index.html
 function isAnchorToIndex(el) {
   if (!el || el.tagName?.toLowerCase() !== 'a') return false;
   const raw = el.getAttribute('href') || '';
@@ -685,7 +646,6 @@ function isAnchorToIndex(el) {
   return /(^|\/)index\.html(\?|#|$)/i.test(raw.trim());
 }
 
-// === BLACKJACK ===
 function initBlackjack() {
   const deckEl = document.getElementById('bj-deck');
   const dealerHandEl = document.getElementById('dealer-hand');
@@ -698,17 +658,10 @@ function initBlackjack() {
   const btnNew = document.getElementById('bj-new');
   const statusEl = document.getElementById('bj-status');
 
-  // NEW: image settings (you can change base/ext)
   const CARD_IMG_BASE = 'assets/cards';
-  const CARD_IMG_EXT  = 'jpg';            // was 'png'
+  const CARD_IMG_EXT  = 'jpg';
   const BACK_IMG      = `${CARD_IMG_BASE}/back.${CARD_IMG_EXT}`;
-  /* Naming convention for 52 face images (UPPERCASE):
-     Rank + SuitLetter, where SuitLetter is: S (♠), H (♥), D (♦), C (♣)
-     Ranks: A, K, Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2
-     Examples: AS.jpg, KH.jpg, QD.jpg, JC.jpg, 10S.jpg, 2C.jpg
-     Place also: back.jpg (or back.<ext>) in assets/cards */
 
-  // show the deck as back image
   if (deckEl) {
     deckEl.style.backgroundImage = `url("${BACK_IMG}")`;
     deckEl.style.backgroundSize = 'cover';
@@ -756,7 +709,7 @@ function initBlackjack() {
     setButtons({ deal: true, hit: false, stand: false, dbl: false, next: false });
 
     const surface = document.querySelector('.bj-surface');
-    if (surface) surface.querySelectorAll('.bj-card').forEach(el => el.remove()); // очистити старі карти з поверхні
+    if (surface) surface.querySelectorAll('.bj-card').forEach(el => el.remove());
 
     if (first || state.shoe.length < 15) {
       state.shoe = buildShuffledShoe(1);
@@ -777,7 +730,6 @@ function initBlackjack() {
     state.player = [];
     status('Роздача...');
 
-    // Послідовна роздача: гравець, дилер, гравець, дилер(закрита)
     const seq = [
       { to: 'player', faceDown: false },
       { to: 'dealer', faceDown: false },
@@ -786,7 +738,6 @@ function initBlackjack() {
     ];
 
     dealSequence(seq, 420).then(() => {
-      // Початкова перевірка блекджека
       const pBJ = isBlackjack(state.player);
       const dBJ = isBlackjack(state.dealer);
       if (pBJ || dBJ) {
@@ -800,7 +751,7 @@ function initBlackjack() {
 
   function onHit() {
     if (!state.inRound || state.playerDone) return;
-    setButtons({ dbl: false }); // після HIT подвійна не доступна
+    setButtons({ dbl: false });
     dealOne('player', false).then(() => {
       const pVal = handValue(state.player);
       if (pVal > 21) {
@@ -840,13 +791,12 @@ function initBlackjack() {
   function dealerPlay() {
     return new Promise(resolve => {
       const step = () => {
-        const val = handValue(state.dealer, true); // S17: стоїмо на софт-17
+        const val = handValue(state.dealer, true);
         const hard = handValue(state.dealer, false);
         const isSoft = val !== hard && val <= 21;
         const dealerTotal = val <= 21 ? val : hard;
 
         if (dealerTotal < 17 || (dealerTotal === 17 && !isSoft && hard < 17)) {
-          // беремо ще
           dealOne('dealer', false).then(() => setTimeout(step, 380));
         } else {
           resolve();
@@ -878,7 +828,7 @@ function initBlackjack() {
       delta = 0;
     } else if (p > 21 && d > 21) {
       msg = 'Обом перебір. Нічия.';
-      delta = state.bet; // повернення ставки
+      delta = state.bet;
     } else if (p > 21) {
       msg = 'Перебір. Поразка.';
     } else if (d > 21) {
@@ -898,20 +848,18 @@ function initBlackjack() {
     balanceAdd(delta);
     status(`${msg} (Ви: ${p}, Дилер: ${d})`);
 
-    // NEW: log blackjack wins to history.html — ×2 and show score as combo
     if (delta > state.bet) {
       addWinToHistory({
         bet: state.bet,
-        win: state.bet * 2,         // завжди показуємо х2, як просили
+        win: state.bet * 2,
         comboHtml: `Рахунок: ${p}:${d}`,
         mult: 2
       });
     }
 
-    // Show Win as bet × 2 only on player win, else 0
     const feed = document.getElementById('session-feed');
     if (feed) {
-      const playerWon = delta > state.bet; // win: 2×bet (or 2.5×bet for BJ)
+      const playerWon = delta > state.bet;
       const shownWin = playerWon ? state.bet * 2 : 0;
       const chip = document.createElement('div');
       chip.className = 'session-chip';
@@ -925,7 +873,6 @@ function initBlackjack() {
       feed.prepend(chip);
     }
 
-    // Add Blackjack to History (x2 shown per requirement)
     if (pBJ && !dBJ) {
       addWinToHistory({
         bet: state.bet,
@@ -946,14 +893,12 @@ function initBlackjack() {
   function revealDealerHole() {
     if (state.dealerRevealed) return Promise.resolve();
     state.dealerRevealed = true;
-    // Знайти другу карту дилера на поверхні за owner+idx
     const holeIdx = 1;
     const cardEl = document.querySelector(`.bj-surface .bj-card[data-owner="dealer"][data-idx="${holeIdx}"]`);
     if (cardEl) cardEl.classList.remove('face-down');
     return wait(380);
   }
 
-  // === Cards/deck helpers ===
   function buildShuffledShoe(decks = 1) {
     const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
     const suits = ['♠','♥','♦','♣'];
@@ -973,7 +918,6 @@ function initBlackjack() {
     return [Number(r)];
   }
   function handValue(cards, softPref = true) {
-    // повертає найкраще значення <=21; якщо softPref — намагаємось рахувати туз як 11
     let sums = [0];
     for (const c of cards) {
       const vals = cardValue(c.r);
@@ -984,7 +928,7 @@ function initBlackjack() {
     sums.sort((a,b)=>b-a);
     const under = sums.find(v=>v<=21);
     if (under != null) return under;
-    return Math.min(...sums); // перебір
+    return Math.min(...sums);
   }
   function bestValue(cards) {
     return handValue(cards, true);
@@ -995,7 +939,6 @@ function initBlackjack() {
     return (ranks.includes('A') && (ranks.includes('10') || ranks.includes('K') || ranks.includes('Q') || ranks.includes('J')));
   }
 
-  // === Deal/flip/render ===
   function dealOne(side, faceDown) {
     const card = state.shoe.pop();
     if (!card) return Promise.resolve();
@@ -1003,7 +946,6 @@ function initBlackjack() {
 
     const idx = (side === 'player' ? state.player.length - 1 : state.dealer.length - 1);
 
-    // Завжди летимо сорочкою вниз; відкриємо після приземлення якщо треба
     const shouldReveal = !faceDown;
     const flying = createCardEl(card, true);
     flying.dataset.owner = side;
@@ -1012,17 +954,37 @@ function initBlackjack() {
     const surface = document.querySelector('.bj-surface');
     surface.appendChild(flying);
 
-    // Координати у системі .bj-surface
     const from = deckEl.getBoundingClientRect();
-    const toLane = (side === 'player' ? playerHandEl : dealerHandEl).getBoundingClientRect();
     const surfaceRect = surface.getBoundingClientRect();
 
-    const offsetX = (toLane.left - surfaceRect.left) + 20 + idx * 28;
-    const offsetY = (toLane.top  - surfaceRect.top)  + 6;
+    const cssNumber = (name, fallback) => {
+      const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const CARD_W       = cssNumber('--bj-card-w', 86);
+    const CARD_H       = cssNumber('--bj-card-h', 124);
+    const LANE_PAD     = cssNumber('--bj-lane-pad', 20);
+    const CARD_SPACING = cssNumber('--bj-card-gap', 28);
+
+    const W = surfaceRect.width;
+    const H = surfaceRect.height;
+
+    const laneW = Math.min(W, CARD_W * 6 + 120);
+    const xStart = Math.max(8, Math.round(W / 2 - laneW / 2 + LANE_PAD));
+
+    const yDealer = Math.round(H * 0.08);
+    const yPlayer = Math.round(H - CARD_H - H * 0.08);
+    const offsetY = (side === 'player') ? yPlayer : yDealer;
+
+    let offsetX = xStart + idx * CARD_SPACING;
+    offsetX = Math.max(8, Math.min(offsetX, W - CARD_W - 8));
+
+    const toTX = `translate(${offsetX}px, ${offsetY}px)`;
     const rot = (Math.random() * 8 - 4).toFixed(2);
 
     flying.style.setProperty('--from-tx', `translate(${from.left - surfaceRect.left}px, ${from.top - surfaceRect.top}px)`);
-    flying.style.setProperty('--to-tx',   `translate(${offsetX}px, ${offsetY}px)`);
+    flying.style.setProperty('--to-tx',   toTX);
     flying.style.setProperty('--from-rot', `0deg`);
     flying.style.setProperty('--to-rot', `${rot}deg`);
     flying.style.animation = 'bjDeal 360ms ease forwards';
@@ -1030,20 +992,20 @@ function initBlackjack() {
     return wait(360).then(() => {
       flying.classList.add('in-hand');
       flying.style.animation = '';
-      flying.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${rot}deg)`;
-      // НЕ переприв'язуємо до .bj-hand — лишаємо в .bj-surface, щоб не було стрибка
+      flying.style.transform = `${toTX} rotate(${rot}deg)`;
 
       if (shouldReveal) {
         return wait(180).then(() => { flying.classList.remove('face-down'); });
       }
     });
   }
+
   function createCardEl(card, faceDown) {
     const el = document.createElement('div');
     el.className = 'bj-card face-down';
-    if (!faceDown) el.classList.remove('face-down'); // kept for compatibility if ever used elsewhere
+    if (!faceDown) el.classList.remove('face-down');
 
-    const frontSrc = cardImgSrc(card); // e.g. assets/cards/AS.png
+    const frontSrc = cardImgSrc(card);
     const backSrc  = BACK_IMG;
 
     el.innerHTML = `
@@ -1055,7 +1017,6 @@ function initBlackjack() {
     return el;
   }
 
-  // Map rank/suit to filename like AS.png, 10H.png, KD.png, etc.
   function cardCode(c) {
     const suitMap = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
     return `${c.r}${suitMap[c.s] || ''}`;
@@ -1063,9 +1024,8 @@ function initBlackjack() {
   function cardImgSrc(c) {
     return `${CARD_IMG_BASE}/${cardCode(c)}.${CARD_IMG_EXT}`;
   }
-  function suitGlyph(s) { return s; } // kept for compatibility; not used now
+  function suitGlyph(s) { return s; }
 
-  // === Balance helpers (reuse global storage) ===
   function getBalance() {
     try { return Math.max(0, Math.floor(Number(localStorage.getItem('balance'))||0)); } catch { return 0; }
   }
@@ -1090,7 +1050,6 @@ function initBlackjack() {
   function wait(ms) { return new Promise(res => setTimeout(res, ms)); }
 }
 
-// NEW: ensure a session bar with a feed exists on the page
 function ensureSessionBar() {
   if (document.getElementById('session-bar')) return;
   const bar = document.createElement('div');
@@ -1105,11 +1064,9 @@ function ensureSessionBar() {
   document.body.prepend(bar);
 }
 
-// NEW: build the same drawer UI on blackjack and wire interactions (self-contained)
 function ensureDrawerForBlackjack() {
   if (document.getElementById('right-drawer')) return;
 
-  // hover zone + toggle button
   const hoverZone = document.createElement('div');
   hoverZone.id = 'drawer-hover-zone';
   hoverZone.setAttribute('aria-hidden', 'true');
@@ -1121,7 +1078,6 @@ function ensureDrawerForBlackjack() {
   toggleBtn.setAttribute('aria-expanded', 'false');
   toggleBtn.textContent = '☰ Меню';
 
-  // drawer + content + house handle
   const drawer = document.createElement('aside');
   drawer.id = 'right-drawer';
   drawer.className = 'drawer';
@@ -1148,7 +1104,6 @@ function ensureDrawerForBlackjack() {
   document.body.appendChild(drawer);
   document.body.appendChild(overlay);
 
-  // interactions (trimmed but same UX)
   const setDrawer = (open) => {
     if (open) {
       drawer.classList.add('open');
@@ -1188,11 +1143,1302 @@ function ensureDrawerForBlackjack() {
   overlay.addEventListener('click', () => setDrawer(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
 
-  // close when clicking any drawer item
   drawer.addEventListener('click', (e) => {
     const item = e.target.closest('.drawer-item a, .drawer-item button');
     if (item) setDrawer(false);
   });
+}
+
+function initBlackjack() {
+  const deckEl = document.getElementById('bj-deck');
+  const dealerHandEl = document.getElementById('dealer-hand');
+  const playerHandEl = document.getElementById('player-hand');
+  const betInput = document.getElementById('bj-bet');
+  const btnDeal = document.getElementById('bj-deal');
+  const btnHit = document.getElementById('bj-hit');
+  const btnStand = document.getElementById('bj-stand');
+  const btnDouble = document.getElementById('bj-double');
+  const btnNew = document.getElementById('bj-new');
+  const statusEl = document.getElementById('bj-status');
+
+  const CARD_IMG_BASE = 'assets/cards';
+  const CARD_IMG_EXT  = 'jpg';
+  const BACK_IMG      = `${CARD_IMG_BASE}/back.${CARD_IMG_EXT}`;
+
+  if (deckEl) {
+    deckEl.style.backgroundImage = `url("${BACK_IMG}")`;
+    deckEl.style.backgroundSize = 'cover';
+    deckEl.style.backgroundPosition = 'center';
+  }
+
+  const state = {
+    shoe: [],
+    dealer: [],
+    player: [],
+    bet: 100,
+    inRound: false,
+    playerDone: false,
+    dealerRevealed: false
+  };
+
+  try {
+    const raw = localStorage.getItem('balance');
+    if (raw !== null) balanceSet(Number(raw));
+  } catch {}
+
+  betInput.addEventListener('input', () => {
+    const v = Math.max(1, Math.floor(Number(betInput.value) || 1));
+    betInput.value = String(v);
+    state.bet = v;
+  });
+
+  btnDeal.addEventListener('click', onDeal);
+  btnHit.addEventListener('click', onHit);
+  btnStand.addEventListener('click', onStand);
+  btnDouble.addEventListener('click', onDouble);
+  btnNew.addEventListener('click', resetTable);
+
+  resetTable(true);
+
+  function resetTable(first = false) {
+    state.dealer = [];
+    state.player = [];
+    state.inRound = false;
+    state.playerDone = false;
+    state.dealerRevealed = false;
+    dealerHandEl.innerHTML = '';
+    playerHandEl.innerHTML = '';
+    status('');
+    setButtons({ deal: true, hit: false, stand: false, dbl: false, next: false });
+
+    const surface = document.querySelector('.bj-surface');
+    if (surface) surface.querySelectorAll('.bj-card').forEach(el => el.remove());
+
+    if (first || state.shoe.length < 15) {
+      state.shoe = buildShuffledShoe(1);
+    }
+  }
+
+  function onDeal() {
+    if (state.inRound) return;
+    const bet = Math.max(1, Math.floor(Number(betInput.value) || 1));
+    state.bet = bet;
+    if (getBalance() < bet) { alert('Недостатньо балансу'); return; }
+    balanceAdd(-bet);
+
+    state.inRound = true;
+    dealerHandEl.innerHTML = '';
+    playerHandEl.innerHTML = '';
+    state.dealer = [];
+    state.player = [];
+    status('Роздача...');
+
+    const seq = [
+      { to: 'player', faceDown: false },
+      { to: 'dealer', faceDown: false },
+      { to: 'player', faceDown: false },
+      { to: 'dealer', faceDown: true }
+    ];
+
+    dealSequence(seq, 420).then(() => {
+      const pBJ = isBlackjack(state.player);
+      const dBJ = isBlackjack(state.dealer);
+      if (pBJ || dBJ) {
+        revealDealerHole().then(() => settleRound(true));
+      } else {
+        status('Ваш хід');
+        setButtons({ deal: false, hit: true, stand: true, dbl: true, next: false });
+      }
+    });
+  }
+
+  function onHit() {
+    if (!state.inRound || state.playerDone) return;
+    setButtons({ dbl: false });
+    dealOne('player', false).then(() => {
+      const pVal = handValue(state.player);
+      if (pVal > 21) {
+        state.playerDone = true;
+        status('Перебір! Дилер перемагає.');
+        revealDealerHole().then(() => settleRound());
+      }
+    });
+  }
+
+  function onStand() {
+    if (!state.inRound) return;
+    state.playerDone = true;
+    status('Хід дилера...');
+    setButtons({ hit: false, stand: false, dbl: false });
+    revealDealerHole().then(dealerPlay).then(settleRound);
+  }
+
+  function onDouble() {
+    if (!state.inRound || state.player.length !== 2) return;
+    if (getBalance() < state.bet) { alert('Недостатньо балансу для подвоєння'); return; }
+    balanceAdd(-state.bet);
+    state.bet *= 2;
+    setButtons({ hit: false, stand: false, dbl: false });
+    dealOne('player', false).then(() => {
+      state.playerDone = true;
+      revealDealerHole().then(dealerPlay).then(settleRound);
+    });
+  }
+
+  function dealSequence(items, gapMs = 350) {
+    return items.reduce((p, it, idx) => {
+      return p.then(() => dealOne(it.to, it.faceDown)).then(() => wait(gapMs));
+    }, Promise.resolve());
+  }
+
+  function dealerPlay() {
+    return new Promise(resolve => {
+      const step = () => {
+        const val = handValue(state.dealer, true);
+        const hard = handValue(state.dealer, false);
+        const isSoft = val !== hard && val <= 21;
+        const dealerTotal = val <= 21 ? val : hard;
+
+        if (dealerTotal < 17 || (dealerTotal === 17 && !isSoft && hard < 17)) {
+          dealOne('dealer', false).then(() => setTimeout(step, 380));
+        } else {
+          resolve();
+        }
+      };
+      step();
+    });
+  }
+
+  function settleRound(force = false) {
+    const p = bestValue(state.player);
+    const d = bestValue(state.dealer);
+
+    let msg = '';
+    let delta = 0;
+
+    if (!force) {
+      if (p > 21) { msg = 'Перебір. Поразка.'; delta = 0; done(); return; }
+    }
+
+    const pBJ = isBlackjack(state.player);
+    const dBJ = isBlackjack(state.dealer);
+
+    if (pBJ && !dBJ) {
+      msg = 'Blackjack! Виграш 3:2';
+      delta = Math.floor(state.bet * 2.5);
+    } else if (!pBJ && dBJ) {
+      msg = 'Дилер має Blackjack. Поразка.';
+      delta = 0;
+    } else if (p > 21 && d > 21) {
+      msg = 'Обом перебір. Нічия.';
+      delta = state.bet;
+    } else if (p > 21) {
+      msg = 'Перебір. Поразка.';
+    } else if (d > 21) {
+      msg = 'Дилер перебрав. Перемога!';
+      delta = state.bet * 2;
+    } else if (p > d) {
+      msg = 'Перемога!';
+      delta = state.bet * 2;
+    } else if (p < d) {
+      msg = 'Поразка.';
+      delta = 0;
+    } else {
+      msg = 'Нічия (Push).';
+      delta = state.bet;
+    }
+
+    balanceAdd(delta);
+    status(`${msg} (Ви: ${p}, Дилер: ${d})`);
+
+    if (delta > state.bet) {
+      addWinToHistory({
+        bet: state.bet,
+        win: state.bet * 2,
+        comboHtml: `Рахунок: ${p}:${d}`,
+        mult: 2
+      });
+    }
+
+    const feed = document.getElementById('session-feed');
+    if (feed) {
+      const playerWon = delta > state.bet;
+      const shownWin = playerWon ? state.bet * 2 : 0;
+      const chip = document.createElement('div');
+      chip.className = 'session-chip';
+      chip.innerHTML = `
+        <span>Ставка: 💎${state.bet}</span>
+        <span>·</span>
+        <span>Виграш: 💎${shownWin}</span>
+        <span>·</span>
+        <span>Рахунок: ${p}:${d}</span>
+      `;
+      feed.prepend(chip);
+    }
+
+    if (pBJ && !dBJ) {
+      addWinToHistory({
+        bet: state.bet,
+        win: state.bet * 2,
+        comboHtml: 'Blackjack',
+        mult: 2
+      });
+    }
+
+    done();
+
+    function done() {
+      state.inRound = false;
+      setButtons({ hit: false, stand: false, dbl: false, deal: false, next: true });
+    }
+  }
+
+  function revealDealerHole() {
+    if (state.dealerRevealed) return Promise.resolve();
+    state.dealerRevealed = true;
+    const holeIdx = 1;
+    const cardEl = document.querySelector(`.bj-surface .bj-card[data-owner="dealer"][data-idx="${holeIdx}"]`);
+    if (cardEl) cardEl.classList.remove('face-down');
+    return wait(380);
+  }
+
+  function buildShuffledShoe(decks = 1) {
+    const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+    const suits = ['♠','♥','♦','♣'];
+    const arr = [];
+    for (let d=0; d<decks; d++) {
+      for (const s of suits) for (const r of ranks) arr.push({ r, s });
+    }
+    for (let i=arr.length-1; i>0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+  function cardValue(r) {
+    if (r === 'A') return [1,11];
+    if (r === 'K' || r === 'Q' || r === 'J' || r === '10') return [10];
+    return [Number(r)];
+  }
+  function handValue(cards, softPref = true) {
+    let sums = [0];
+    for (const c of cards) {
+      const vals = cardValue(c.r);
+      const next = [];
+      for (const s of sums) for (const v of vals) next.push(s+v);
+      sums = next;
+    }
+    sums.sort((a,b)=>b-a);
+    const under = sums.find(v=>v<=21);
+    if (under != null) return under;
+    return Math.min(...sums);
+  }
+  function bestValue(cards) {
+    return handValue(cards, true);
+  }
+  function isBlackjack(cards) {
+    if (cards.length !== 2) return false;
+    const ranks = cards.map(c=>c.r);
+    return (ranks.includes('A') && (ranks.includes('10') || ranks.includes('K') || ranks.includes('Q') || ranks.includes('J')));
+  }
+
+  function dealOne(side, faceDown) {
+    const card = state.shoe.pop();
+    if (!card) return Promise.resolve();
+    (side === 'player' ? state.player : state.dealer).push(card);
+
+    const idx = (side === 'player' ? state.player.length - 1 : state.dealer.length - 1);
+
+    const shouldReveal = !faceDown;
+    const flying = createCardEl(card, true);
+    flying.dataset.owner = side;
+    flying.dataset.idx = String(idx);
+
+    const surface = document.querySelector('.bj-surface');
+    surface.appendChild(flying);
+
+    const from = deckEl.getBoundingClientRect();
+    const surfaceRect = surface.getBoundingClientRect();
+
+    const cssNumber = (name, fallback) => {
+      const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const CARD_W       = cssNumber('--bj-card-w', 86);
+    const CARD_H       = cssNumber('--bj-card-h', 124);
+    const LANE_PAD     = cssNumber('--bj-lane-pad', 20);
+    const CARD_SPACING = cssNumber('--bj-card-gap', 28);
+
+    const W = surfaceRect.width;
+    const H = surfaceRect.height;
+
+    const laneW = Math.min(W, CARD_W * 6 + 120);
+    const xStart = Math.max(8, Math.round(W / 2 - laneW / 2 + LANE_PAD));
+
+    const yDealer = Math.round(H * 0.08);
+    const yPlayer = Math.round(H - CARD_H - H * 0.08);
+    const offsetY = (side === 'player') ? yPlayer : yDealer;
+
+    let offsetX = xStart + idx * CARD_SPACING;
+    offsetX = Math.max(8, Math.min(offsetX, W - CARD_W - 8));
+
+    const toTX = `translate(${offsetX}px, ${offsetY}px)`;
+    const rot = (Math.random() * 8 - 4).toFixed(2);
+
+    flying.style.setProperty('--from-tx', `translate(${from.left - surfaceRect.left}px, ${from.top - surfaceRect.top}px)`);
+    flying.style.setProperty('--to-tx',   toTX);
+    flying.style.setProperty('--from-rot', `0deg`);
+    flying.style.setProperty('--to-rot', `${rot}deg`);
+    flying.style.animation = 'bjDeal 360ms ease forwards';
+
+    return wait(360).then(() => {
+      flying.classList.add('in-hand');
+      flying.style.animation = '';
+      flying.style.transform = `${toTX} rotate(${rot}deg)`;
+
+      if (shouldReveal) {
+        return wait(180).then(() => { flying.classList.remove('face-down'); });
+      }
+    });
+  }
+
+  function createCardEl(card, faceDown) {
+    const el = document.createElement('div');
+    el.className = 'bj-card face-down';
+    if (!faceDown) el.classList.remove('face-down');
+
+    const frontSrc = cardImgSrc(card);
+    const backSrc  = BACK_IMG;
+
+    el.innerHTML = `
+      <div class="inner">
+        <div class="face front"><img alt="${cardCode(card)}" src="${frontSrc}"></div>
+        <div class="face back"><img alt="back" src="${backSrc}"></div>
+      </div>
+    `;
+    return el;
+  }
+
+  function cardCode(c) {
+    const suitMap = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
+    return `${c.r}${suitMap[c.s] || ''}`;
+  }
+  function cardImgSrc(c) {
+    return `${CARD_IMG_BASE}/${cardCode(c)}.${CARD_IMG_EXT}`;
+  }
+  function suitGlyph(s) { return s; }
+
+  function getBalance() {
+    try { return Math.max(0, Math.floor(Number(localStorage.getItem('balance'))||0)); } catch { return 0; }
+  }
+  function balanceSet(v) {
+    const val = Math.max(0, Math.floor(v||0));
+    try { localStorage.setItem('balance', String(val)); } catch {}
+    ensureGlobalBalanceBadge();
+  }
+  function balanceAdd(delta) {
+    const v = getBalance()+Math.floor(delta||0);
+    balanceSet(v);
+  }
+
+  function setButtons(partial) {
+    btnDeal.disabled   = partial.deal === undefined ? btnDeal.disabled   : !partial.deal;
+    btnHit.disabled    = partial.hit  === undefined ? btnHit.disabled    : !partial.hit;
+    btnStand.disabled  = partial.stand=== undefined ? btnStand.disabled  : !partial.stand;
+    btnDouble.disabled = partial.dbl  === undefined ? btnDouble.disabled : !partial.dbl;
+    btnNew.disabled    = partial.next === undefined ? btnNew.disabled    : !partial.next;
+  }
+  function status(txt) { statusEl.textContent = txt || ''; }
+  function wait(ms) { return new Promise(res => setTimeout(res, ms)); }
+}
+
+function ensureSessionBar() {
+  if (document.getElementById('session-bar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'session-bar';
+  bar.setAttribute('role', 'region');
+  bar.setAttribute('aria-label', 'Інфо по виграшам за сеанс');
+  bar.innerHTML = `
+    <div class="session-inner">
+      <div id="session-feed" aria-live="polite" aria-atomic="false"></div>
+    </div>
+  `;
+  document.body.prepend(bar);
+}
+
+function ensureDrawerForBlackjack() {
+  if (document.getElementById('right-drawer')) return;
+
+  const hoverZone = document.createElement('div');
+  hoverZone.id = 'drawer-hover-zone';
+  hoverZone.setAttribute('aria-hidden', 'true');
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.id = 'drawer-toggle';
+  toggleBtn.type = 'button';
+  toggleBtn.setAttribute('aria-controls', 'right-drawer');
+  toggleBtn.setAttribute('aria-expanded', 'false');
+  toggleBtn.textContent = '☰ Меню';
+
+  const drawer = document.createElement('aside');
+  drawer.id = 'right-drawer';
+  drawer.className = 'drawer';
+  drawer.setAttribute('aria-hidden', 'true');
+  drawer.innerHTML = `
+    <nav class="drawer-content" aria-label="Бічне меню">
+      <a class="drawer-title" href="menu.html">ГОЛОВНЕ МЕНЮ</a>
+      <ul class="drawer-list">
+        <li class="drawer-item"><a href="profile.html" data-action="profile">💼Мій кабінет💼</a></li>
+        <li class="drawer-item"><a href="topup.html" data-action="topup">💳Поповнення балансу💳</a></li>
+        <li class="drawer-item"><a href="history.html" data-action="history">📜Історія виграшу📜</a></li>
+        <li class="drawer-item"><a href="support.html" data-action="support">🛠️Тех. підтримка🛠️</a></li>
+      </ul>
+    </nav>
+    <button id="drawer-house" type="button" aria-label="Меню">🏠</button>
+  `;
+  const overlay = document.createElement('div');
+  overlay.id = 'drawer-overlay';
+  overlay.className = 'drawer-overlay';
+  overlay.hidden = true;
+
+  document.body.appendChild(hoverZone);
+  document.body.appendChild(toggleBtn);
+  document.body.appendChild(drawer);
+  document.body.appendChild(overlay);
+
+  const setDrawer = (open) => {
+    if (open) {
+      drawer.classList.add('open');
+      drawer.setAttribute('aria-hidden', 'false');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      overlay.hidden = false; overlay.classList.add('active');
+    } else {
+      drawer.classList.remove('open');
+      drawer.setAttribute('aria-hidden', 'true');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      overlay.classList.remove('active');
+      setTimeout(() => { if (!drawer.classList.contains('open')) overlay.hidden = true; }, 200);
+    }
+  };
+
+  let hoverCloseTimeout = null;
+  let isOverZone = false, isOverDrawer = false, isOverHouse = false;
+  const scheduleClose = () => {
+    clearTimeout(hoverCloseTimeout);
+    hoverCloseTimeout = setTimeout(() => {
+      if (!isOverZone && !isOverDrawer && !isOverHouse) setDrawer(false);
+    }, 160);
+  };
+
+  hoverZone.addEventListener('mouseenter', () => { isOverZone = true; setDrawer(true); });
+  hoverZone.addEventListener('mouseleave', () => { isOverZone = false; scheduleClose(); });
+
+  const houseBtn = drawer.querySelector('#drawer-house');
+  houseBtn.addEventListener('mouseenter', () => { isOverHouse = true; setDrawer(true); });
+  houseBtn.addEventListener('mouseleave', () => { isOverHouse = false; scheduleClose(); });
+  houseBtn.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+
+  drawer.addEventListener('mouseenter', () => { isOverDrawer = true; clearTimeout(hoverCloseTimeout); });
+  drawer.addEventListener('mouseleave', () => { isOverDrawer = false; scheduleClose(); });
+
+  toggleBtn.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+  overlay.addEventListener('click', () => setDrawer(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
+
+  drawer.addEventListener('click', (e) => {
+    const item = e.target.closest('.drawer-item a, .drawer-item button');
+    if (item) setDrawer(false);
+  });
+}
+
+function initBlackjack() {
+  const deckEl = document.getElementById('bj-deck');
+  const dealerHandEl = document.getElementById('dealer-hand');
+  const playerHandEl = document.getElementById('player-hand');
+  const betInput = document.getElementById('bj-bet');
+  const btnDeal = document.getElementById('bj-deal');
+  const btnHit = document.getElementById('bj-hit');
+  const btnStand = document.getElementById('bj-stand');
+  const btnDouble = document.getElementById('bj-double');
+  const btnNew = document.getElementById('bj-new');
+  const statusEl = document.getElementById('bj-status');
+
+  const CARD_IMG_BASE = 'assets/cards';
+  const CARD_IMG_EXT  = 'jpg';
+  const BACK_IMG      = `${CARD_IMG_BASE}/back.${CARD_IMG_EXT}`;
+
+  if (deckEl) {
+    deckEl.style.backgroundImage = `url("${BACK_IMG}")`;
+    deckEl.style.backgroundSize = 'cover';
+    deckEl.style.backgroundPosition = 'center';
+  }
+
+  const state = {
+    shoe: [],
+    dealer: [],
+    player: [],
+    bet: 100,
+    inRound: false,
+    playerDone: false,
+    dealerRevealed: false
+  };
+
+  try {
+    const raw = localStorage.getItem('balance');
+    if (raw !== null) balanceSet(Number(raw));
+  } catch {}
+
+  betInput.addEventListener('input', () => {
+    const v = Math.max(1, Math.floor(Number(betInput.value) || 1));
+    betInput.value = String(v);
+    state.bet = v;
+  });
+
+  btnDeal.addEventListener('click', onDeal);
+  btnHit.addEventListener('click', onHit);
+  btnStand.addEventListener('click', onStand);
+  btnDouble.addEventListener('click', onDouble);
+  btnNew.addEventListener('click', resetTable);
+
+  resetTable(true);
+
+  function resetTable(first = false) {
+    state.dealer = [];
+    state.player = [];
+    state.inRound = false;
+    state.playerDone = false;
+    state.dealerRevealed = false;
+    dealerHandEl.innerHTML = '';
+    playerHandEl.innerHTML = '';
+    status('');
+    setButtons({ deal: true, hit: false, stand: false, dbl: false, next: false });
+
+    const surface = document.querySelector('.bj-surface');
+    if (surface) surface.querySelectorAll('.bj-card').forEach(el => el.remove());
+
+    if (first || state.shoe.length < 15) {
+      state.shoe = buildShuffledShoe(1);
+    }
+  }
+
+  function onDeal() {
+    if (state.inRound) return;
+    const bet = Math.max(1, Math.floor(Number(betInput.value) || 1));
+    state.bet = bet;
+    if (getBalance() < bet) { alert('Недостатньо балансу'); return; }
+    balanceAdd(-bet);
+
+    state.inRound = true;
+    dealerHandEl.innerHTML = '';
+    playerHandEl.innerHTML = '';
+    state.dealer = [];
+    state.player = [];
+    status('Роздача...');
+
+    const seq = [
+      { to: 'player', faceDown: false },
+      { to: 'dealer', faceDown: false },
+      { to: 'player', faceDown: false },
+      { to: 'dealer', faceDown: true }
+    ];
+
+    dealSequence(seq, 420).then(() => {
+      const pBJ = isBlackjack(state.player);
+      const dBJ = isBlackjack(state.dealer);
+      if (pBJ || dBJ) {
+        revealDealerHole().then(() => settleRound(true));
+      } else {
+        status('Ваш хід');
+        setButtons({ deal: false, hit: true, stand: true, dbl: true, next: false });
+      }
+    });
+  }
+
+  function onHit() {
+    if (!state.inRound || state.playerDone) return;
+    setButtons({ dbl: false });
+    dealOne('player', false).then(() => {
+      const pVal = handValue(state.player);
+      if (pVal > 21) {
+        state.playerDone = true;
+        status('Перебір! Дилер перемагає.');
+        revealDealerHole().then(() => settleRound());
+      }
+    });
+  }
+
+  function onStand() {
+    if (!state.inRound) return;
+    state.playerDone = true;
+    status('Хід дилера...');
+    setButtons({ hit: false, stand: false, dbl: false });
+    revealDealerHole().then(dealerPlay).then(settleRound);
+  }
+
+  function onDouble() {
+    if (!state.inRound || state.player.length !== 2) return;
+    if (getBalance() < state.bet) { alert('Недостатньо балансу для подвоєння'); return; }
+    balanceAdd(-state.bet);
+    state.bet *= 2;
+    setButtons({ hit: false, stand: false, dbl: false });
+    dealOne('player', false).then(() => {
+      state.playerDone = true;
+      revealDealerHole().then(dealerPlay).then(settleRound);
+    });
+  }
+
+  function dealSequence(items, gapMs = 350) {
+    return items.reduce((p, it, idx) => {
+      return p.then(() => dealOne(it.to, it.faceDown)).then(() => wait(gapMs));
+    }, Promise.resolve());
+  }
+
+  function dealerPlay() {
+    return new Promise(resolve => {
+      const step = () => {
+        const val = handValue(state.dealer, true);
+        const hard = handValue(state.dealer, false);
+        const isSoft = val !== hard && val <= 21;
+        const dealerTotal = val <= 21 ? val : hard;
+
+        if (dealerTotal < 17 || (dealerTotal === 17 && !isSoft && hard < 17)) {
+          dealOne('dealer', false).then(() => setTimeout(step, 380));
+        } else {
+          resolve();
+        }
+      };
+      step();
+    });
+  }
+
+  function settleRound(force = false) {
+    const p = bestValue(state.player);
+    const d = bestValue(state.dealer);
+
+    let msg = '';
+    let delta = 0;
+
+    if (!force) {
+      if (p > 21) { msg = 'Перебір. Поразка.'; delta = 0; done(); return; }
+    }
+
+    const pBJ = isBlackjack(state.player);
+    const dBJ = isBlackjack(state.dealer);
+
+    if (pBJ && !dBJ) {
+      msg = 'Blackjack! Виграш 3:2';
+      delta = Math.floor(state.bet * 2.5);
+    } else if (!pBJ && dBJ) {
+      msg = 'Дилер має Blackjack. Поразка.';
+      delta = 0;
+    } else if (p > 21 && d > 21) {
+      msg = 'Обом перебір. Нічия.';
+      delta = state.bet;
+    } else if (p > 21) {
+      msg = 'Перебір. Поразка.';
+    } else if (d > 21) {
+      msg = 'Дилер перебрав. Перемога!';
+      delta = state.bet * 2;
+    } else if (p > d) {
+      msg = 'Перемога!';
+      delta = state.bet * 2;
+    } else if (p < d) {
+      msg = 'Поразка.';
+      delta = 0;
+    } else {
+      msg = 'Нічия (Push).';
+      delta = state.bet;
+    }
+
+    balanceAdd(delta);
+    status(`${msg} (Ви: ${p}, Дилер: ${d})`);
+
+    if (delta > state.bet) {
+      addWinToHistory({
+        bet: state.bet,
+        win: state.bet * 2,
+        comboHtml: `Рахунок: ${p}:${d}`,
+        mult: 2
+      });
+    }
+
+    const feed = document.getElementById('session-feed');
+    if (feed) {
+      const playerWon = delta > state.bet;
+      const shownWin = playerWon ? state.bet * 2 : 0;
+      const chip = document.createElement('div');
+      chip.className = 'session-chip';
+      chip.innerHTML = `
+        <span>Ставка: 💎${state.bet}</span>
+        <span>·</span>
+        <span>Виграш: 💎${shownWin}</span>
+        <span>·</span>
+        <span>Рахунок: ${p}:${d}</span>
+      `;
+      feed.prepend(chip);
+    }
+
+    if (pBJ && !dBJ) {
+      addWinToHistory({
+        bet: state.bet,
+        win: state.bet * 2,
+        comboHtml: 'Blackjack',
+        mult: 2
+      });
+    }
+
+    done();
+
+    function done() {
+      state.inRound = false;
+      setButtons({ hit: false, stand: false, dbl: false, deal: false, next: true });
+    }
+  }
+
+  function revealDealerHole() {
+    if (state.dealerRevealed) return Promise.resolve();
+    state.dealerRevealed = true;
+    const holeIdx = 1;
+    const cardEl = document.querySelector(`.bj-surface .bj-card[data-owner="dealer"][data-idx="${holeIdx}"]`);
+    if (cardEl) cardEl.classList.remove('face-down');
+    return wait(380);
+  }
+
+  function buildShuffledShoe(decks = 1) {
+    const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+    const suits = ['♠','♥','♦','♣'];
+    const arr = [];
+    for (let d=0; d<decks; d++) {
+      for (const s of suits) for (const r of ranks) arr.push({ r, s });
+    }
+    for (let i=arr.length-1; i>0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+  function cardValue(r) {
+    if (r === 'A') return [1,11];
+    if (r === 'K' || r === 'Q' || r === 'J' || r === '10') return [10];
+    return [Number(r)];
+  }
+  function handValue(cards, softPref = true) {
+    let sums = [0];
+    for (const c of cards) {
+      const vals = cardValue(c.r);
+      const next = [];
+      for (const s of sums) for (const v of vals) next.push(s+v);
+      sums = next;
+    }
+    sums.sort((a,b)=>b-a);
+    const under = sums.find(v=>v<=21);
+    if (under != null) return under;
+    return Math.min(...sums);
+  }
+  function bestValue(cards) {
+    return handValue(cards, true);
+  }
+  function isBlackjack(cards) {
+    if (cards.length !== 2) return false;
+    const ranks = cards.map(c=>c.r);
+    return (ranks.includes('A') && (ranks.includes('10') || ranks.includes('K') || ranks.includes('Q') || ranks.includes('J')));
+  }
+
+  function dealOne(side, faceDown) {
+    const card = state.shoe.pop();
+    if (!card) return Promise.resolve();
+    (side === 'player' ? state.player : state.dealer).push(card);
+
+    const idx = (side === 'player' ? state.player.length - 1 : state.dealer.length - 1);
+
+    const shouldReveal = !faceDown;
+    const flying = createCardEl(card, true);
+    flying.dataset.owner = side;
+    flying.dataset.idx = String(idx);
+
+    const surface = document.querySelector('.bj-surface');
+    surface.appendChild(flying);
+
+    const from = deckEl.getBoundingClientRect();
+    const surfaceRect = surface.getBoundingClientRect();
+
+    const cssNumber = (name, fallback) => {
+      const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const CARD_W       = cssNumber('--bj-card-w', 86);
+    const CARD_H       = cssNumber('--bj-card-h', 124);
+    const LANE_PAD     = cssNumber('--bj-lane-pad', 20);
+    const CARD_SPACING = cssNumber('--bj-card-gap', 28);
+
+    const W = surfaceRect.width;
+    const H = surfaceRect.height;
+
+    const laneW = Math.min(W, CARD_W * 6 + 120);
+    const xStart = Math.max(8, Math.round(W / 2 - laneW / 2 + LANE_PAD));
+
+    const yDealer = Math.round(H * 0.08);
+    const yPlayer = Math.round(H - CARD_H - H * 0.08);
+    const offsetY = (side === 'player') ? yPlayer : yDealer;
+
+    let offsetX = xStart + idx * CARD_SPACING;
+    offsetX = Math.max(8, Math.min(offsetX, W - CARD_W - 8));
+
+    const toTX = `translate(${offsetX}px, ${offsetY}px)`;
+    const rot = (Math.random() * 8 - 4).toFixed(2);
+
+    flying.style.setProperty('--from-tx', `translate(${from.left - surfaceRect.left}px, ${from.top - surfaceRect.top}px)`);
+    flying.style.setProperty('--to-tx',   toTX);
+    flying.style.setProperty('--from-rot', `0deg`);
+    flying.style.setProperty('--to-rot', `${rot}deg`);
+    flying.style.animation = 'bjDeal 360ms ease forwards';
+
+    return wait(360).then(() => {
+      flying.classList.add('in-hand');
+      flying.style.animation = '';
+      flying.style.transform = `${toTX} rotate(${rot}deg)`;
+
+      if (shouldReveal) {
+        return wait(180).then(() => { flying.classList.remove('face-down'); });
+      }
+    });
+  }
+
+  function createCardEl(card, faceDown) {
+    const el = document.createElement('div');
+    el.className = 'bj-card face-down';
+    if (!faceDown) el.classList.remove('face-down');
+
+    const frontSrc = cardImgSrc(card);
+    const backSrc  = BACK_IMG;
+
+    el.innerHTML = `
+      <div class="inner">
+        <div class="face front"><img alt="${cardCode(card)}" src="${frontSrc}"></div>
+        <div class="face back"><img alt="back" src="${backSrc}"></div>
+      </div>
+    `;
+    return el;
+  }
+
+  function cardCode(c) {
+    const suitMap = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
+    return `${c.r}${suitMap[c.s] || ''}`;
+  }
+  function cardImgSrc(c) {
+    return `${CARD_IMG_BASE}/${cardCode(c)}.${CARD_IMG_EXT}`;
+  }
+  function suitGlyph(s) { return s; }
+
+  function getBalance() {
+    try { return Math.max(0, Math.floor(Number(localStorage.getItem('balance'))||0)); } catch { return 0; }
+  }
+  function balanceSet(v) {
+    const val = Math.max(0, Math.floor(v||0));
+    try { localStorage.setItem('balance', String(val)); } catch {}
+    ensureGlobalBalanceBadge();
+  }
+  function balanceAdd(delta) {
+    const v = getBalance()+Math.floor(delta||0);
+    balanceSet(v);
+  }
+
+  function setButtons(partial) {
+    btnDeal.disabled   = partial.deal === undefined ? btnDeal.disabled   : !partial.deal;
+    btnHit.disabled    = partial.hit  === undefined ? btnHit.disabled    : !partial.hit;
+    btnStand.disabled  = partial.stand=== undefined ? btnStand.disabled  : !partial.stand;
+    btnDouble.disabled = partial.dbl  === undefined ? btnDouble.disabled : !partial.dbl;
+    btnNew.disabled    = partial.next === undefined ? btnNew.disabled    : !partial.next;
+  }
+  function status(txt) { statusEl.textContent = txt || ''; }
+  function wait(ms) { return new Promise(res => setTimeout(res, ms)); }
+}
+
+function initRocket() {
+  if (document.body?.dataset?.page !== 'rocket') return;
+
+  const betInput = document.getElementById('rocket-bet');
+  const btnMax = document.getElementById('bet-max');
+  const btnMin = document.getElementById('bet-min');
+  let launchBtn = document.getElementById('rocket-launch');
+  let cashBtn   = document.getElementById('rocket-cashout');
+
+  const stage = document.getElementById('rocket-stage');
+  const rocketEl = document.getElementById('rocket-sprite');
+  const boomEl = document.getElementById('rocket-explosion');
+  const multEl = document.getElementById('rocket-mult');
+  const statusEl = document.getElementById('rocket-status');
+
+  const xScale = document.getElementById('x-scale');
+  const xScaleInner = document.getElementById('x-scale-inner');
+  const lastCrashEl = document.getElementById('rocket-last-crash');
+
+  const PX_PER_X = 28;
+  const MIN_X = 1;
+  const X_MAX = 10;
+  const DISPLAY_X_MAX = 19;
+  const X_STEP = 0.5;
+  const GROWTH_PER_SEC = 0.70 / 1.5;
+  const SCALE_TOP_PX = 8;
+  const ROCKET_TILT_DEG = 1;
+  const MAX_ROUND_SEC = 45;
+  const STICK_OFFSET_PCT = 0.02;
+
+  const xHistoryEl = document.getElementById('rocket-x-history');
+  const MAX_X_HISTORY = 15;
+  function classForMult(m) {
+    if (m >= 9) return 'violet';
+    if (m >= 4) return 'green';
+    if (m >= 2) return 'yellow';
+    if (m >= 1.25) return 'gray';
+    return 'red';
+  }
+  function pushXHistory(mult) {
+    if (!xHistoryEl) return;
+    const chip = document.createElement('span');
+    const cls = classForMult(mult);
+    chip.className = `xchip ${cls}`;
+    chip.textContent = `x${mult.toFixed(2)}`;
+    xHistoryEl.prepend(chip);
+    while (xHistoryEl.children.length > MAX_X_HISTORY) {
+      xHistoryEl.lastElementChild?.remove();
+    }
+  }
+
+  function getBalance() {
+    try {
+      const raw = localStorage.getItem('balance');
+      const v = raw !== null ? Math.floor(Number(raw)) : 0;
+      return Number.isFinite(v) && v > 0 ? v : 0;
+    } catch { return 0; }
+  }
+  function balanceSet(v) {
+    const val = Math.max(0, Math.floor(v || 0));
+    try { localStorage.setItem('balance', String(val)); } catch {}
+    ensureGlobalBalanceBadge();
+  }
+  function balanceAdd(delta) {
+    balanceSet(getBalance() + Math.floor(delta || 0));
+  }
+
+  const MIN_CONST = 100;
+  function clamp(val) {
+    const bal = getBalance();
+    const max = Math.max(0, bal);
+    const min = Math.min(MIN_CONST, max);
+    return Math.min(Math.max(val, min), max);
+  }
+
+  function buildScale() {
+    if (!xScaleInner) return;
+    const totalH = (DISPLAY_X_MAX - MIN_X) * PX_PER_X;
+    xScaleInner.style.height = totalH + 'px';
+    xScaleInner.innerHTML = '';
+    for (let v = MIN_X; v <= DISPLAY_X_MAX + 1e-6; v += X_STEP) {
+      const yb = Math.round((v - MIN_X) * PX_PER_X);
+      const tick = document.createElement('div');
+      const isMajor = Math.abs(v - Math.round(v)) < 1e-6;
+      tick.className = 'x-tick' + (isMajor ? ' major' : '');
+      tick.style.bottom = yb + 'px';
+      xScaleInner.appendChild(tick);
+      if (isMajor) {
+        const lbl = document.createElement('div');
+        lbl.className = 'x-label';
+        lbl.style.bottom = yb + 'px';
+        lbl.textContent = 'x' + Math.round(v);
+        xScaleInner.appendChild(lbl);
+      }
+    }
+  }
+
+  let running = false, rafId = 0, startTs = 0, crashTs = 0;
+  let y = 0, yCenter = 0, lastMs = 0, scrollerActive = false;
+  let baseBottomAtY0 = 0;
+  let scaleTranslate = 0;
+  let crashTarget = null;
+  let roundDeadlineTs = 0;
+  let activeBet = 0;
+  let cashed = false;
+
+  let stickEl = null;
+  (function ensureStick() {
+    if (!stage) return;
+    stickEl = document.getElementById('rocket-stick');
+    if (!stickEl) {
+      stickEl = document.createElement('div');
+      stickEl.id = 'rocket-stick';
+      stickEl.setAttribute('aria-hidden', 'true');
+      stage.appendChild(stickEl);
+    }
+  })();
+
+  function setUIState(active) {
+    const dis = !active;
+    if (betInput) betInput.disabled = dis;
+    if (btnMax) btnMax.disabled = dis;
+    if (btnMin) btnMin.disabled = dis;
+    const l = launchBtn || document.getElementById('rocket-launch');
+    const c = cashBtn   || document.getElementById('rocket-cashout');
+    if (l) l.disabled = !active ? true : false;
+    if (c) c.disabled = active ? true : false;
+  }
+
+  function updateStick(yb, curTranslate) {
+    if (!stickEl || !stage || !xScale) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const scaleRect = xScale.getBoundingClientRect();
+    const yOffset = stageRect.height * STICK_OFFSET_PCT;
+
+    const rocketRect = rocketEl?.getBoundingClientRect?.();
+    const xR = rocketRect
+      ? (rocketRect.left - stageRect.left) + rocketRect.width / 2
+      : stageRect.width / 2; // fallback
+    const yRBase = baseBottomAtY0 + y;
+    const yR = yRBase - yOffset; // raise start
+
+    const xS = (scaleRect.left - stageRect.left) + 10;
+    const scaleH = xScale?.clientHeight || (stageRect.height - 16);
+    const tickSceneYBase = (scaleRect.top - stageRect.top) + (scaleH - yb) + (curTranslate || 0);
+    const tickSceneY = tickSceneYBase - yOffset; // raise end
+
+    const dx = xS - xR;
+    const dy = tickSceneY - yR;
+    const len = Math.max(0, Math.hypot(dx, dy));
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+
+    stickEl.style.width = `${Math.round(len)}px`;
+    stickEl.style.transform = `translate(${Math.round(xR)}px, ${Math.round(yR)}px) rotate(${ang}deg)`;
+    stickEl.style.opacity = '1';
+  }
+
+  function resetStage() {
+    running = false;
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+    lastMs = 0;
+    scrollerActive = false;
+    scaleTranslate = 0;
+    crashTarget = null;
+    roundDeadlineTs = 0;
+    activeBet = 0;
+    cashed = false;
+
+    const stageH = stage?.clientHeight || 0;
+    const rocketH = rocketEl?.clientHeight || 120;
+
+    baseBottomAtY0 = stageH - 16;
+    yCenter = Math.round(16 - stageH / 2);
+
+    if (multEl) multEl.textContent = 'x1.00';
+    if (statusEl) statusEl.textContent = 'Готово';
+    if (boomEl) boomEl.style.display = 'none';
+    if (xScaleInner) xScaleInner.style.transform = 'translateY(0)';
+    if (stickEl) stickEl.style.opacity = '1';
+
+    const scaleH = xScale?.clientHeight || (stageH - 16);
+    const yb = (1 - MIN_X) * PX_PER_X;
+    y = Math.round(SCALE_TOP_PX + (scaleH - yb) - baseBottomAtY0);
+    if (rocketEl) {
+      rocketEl.style.opacity = '1';
+      rocketEl.style.transform = `translateX(-50%) translateY(${y}px) rotate(${ROCKET_TILT_DEG}deg)`;
+    }
+
+    updateStick(yb, 0);
+
+    setUIState(true);
+  }
+
+  function showExplosion(yPx) {
+    if (!boomEl) return;
+    boomEl.style.display = 'block';
+    boomEl.style.transform = `translateX(-50%) translateY(${yPx}px)`;
+  }
+
+  function animate(nowMs) {
+    if (!lastMs) lastMs = nowMs;
+    const dt = Math.min(0.05, (nowMs - lastMs) / 1000);
+    const t  = Math.max(0, (nowMs - startTs) / 1000);
+    lastMs = nowMs;
+
+    const mult = 1 + GROWTH_PER_SEC * t;
+    if (multEl) multEl.textContent = 'x' + Math.min(mult, X_MAX).toFixed(2);
+
+    const stageH = stage?.clientHeight || 0;
+    const rocketH = rocketEl?.clientHeight || 120;
+    const scaleH  = xScale?.clientHeight || (stageH - 16);
+    const innerH  = (DISPLAY_X_MAX - MIN_X) * PX_PER_X;
+    const yb      = (mult - MIN_X) * PX_PER_X;
+
+    if (!scrollerActive) {
+      const yCandidate = Math.round(SCALE_TOP_PX + (scaleH - yb) - baseBottomAtY0);
+      if (yCandidate <= yCenter) {
+        y = yCenter;
+        scrollerActive = true;
+      } else {
+        y = yCandidate;
+      }
+      if (rocketEl) rocketEl.style.transform = `translateX(-50%) translateY(${y}px) rotate(${ROCKET_TILT_DEG}deg)`;
+      if (xScaleInner) xScaleInner.style.transform = 'translateY(0)';
+      scaleTranslate = 0;
+      updateStick(yb, scaleTranslate);
+    } else {
+      y = yCenter;
+      if (rocketEl) rocketEl.style.transform = `translateX(-50%) translateY(${y}px) rotate(${ROCKET_TILT_DEG}deg)`;
+
+      const sceneCenter = stageH / 2;
+      let T = Math.round(sceneCenter - (SCALE_TOP_PX + (scaleH - yb)));
+
+      const minT = scaleH - innerH;
+      const maxT = 0;
+      if (T < minT) T = minT;
+      if (T > maxT) T = maxT;
+
+      scaleTranslate = T;
+      if (xScaleInner) xScaleInner.style.transform = `translateY(${T}px)`;
+      updateStick(yb, scaleTranslate);
+    }
+
+    if (
+      (crashTarget && mult >= crashTarget - 1e-6) ||
+      mult >= X_MAX - 1e-6 ||
+      nowMs >= crashTs ||
+      (roundDeadlineTs && nowMs >= roundDeadlineTs)
+    ) {
+      crashTarget = null;
+      if (statusEl) statusEl.textContent = 'Вибух!';
+      if (rocketEl) rocketEl.style.opacity = '0';
+      if (stickEl) stickEl.style.opacity = '0';
+      if (lastCrashEl) lastCrashEl.textContent = `Останній краш: x${Math.min(mult, X_MAX).toFixed(2)}`;
+      showExplosion(Math.round(y));
+      setTimeout(() => { if (boomEl) boomEl.style.display = 'none'; resetStage(); }, 1400);
+      return;
+    }
+
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function sampleCrashMultiplier() {
+    const u = Math.random();
+    const R = (a, b) => a + Math.random() * (b - a);
+    let v;
+    if (u < 0.70) v = R(1.0, 1.5);
+    else if (u < 0.80) v = R(1.5, 2.0);
+    else if (u < 0.85) v = R(2.0, 5.0);
+    else if (u < 0.90) v = R(5.0, 8.0);
+    else v = R(8.0, X_MAX);
+    return Math.min(v, X_MAX);
+  }
+
+  function startRound() {
+    if (running) return;
+    cancelAnimationFrame(rafId); rafId = 0;
+
+    const bet = clamp(Math.floor(Number(betInput?.value) || MIN_CONST));
+    if (bet < 1) return;
+    if (getBalance() < bet) { alert('Недостатньо балансу'); return; }
+    activeBet = bet;
+    balanceAdd(-activeBet);
+    cashed = false;
+
+    running = true;
+    setUIState(false);
+    if (statusEl) statusEl.textContent = 'Старт...';
+    if (multEl) multEl.textContent = 'x1.00';
+    if (boomEl) boomEl.style.display = 'none';
+
+    buildScale();
+    if (xScaleInner) xScaleInner.style.transform = 'translateY(0)';
+    scrollerActive = false;
+    scaleTranslate = 0;
+    if (stickEl) stickEl.style.opacity = '1';
+
+    startTs = performance.now();
+    crashTarget = Math.min(sampleCrashMultiplier(), X_MAX);
+    const tCrashSec = Math.max(0, (crashTarget - 1) / GROWTH_PER_SEC);
+    crashTs = startTs + tCrashSec * 1000;
+    roundDeadlineTs = startTs + MAX_ROUND_SEC * 1000;
+    lastMs = 0;
+
+    setTimeout(() => { if (statusEl) statusEl.textContent = 'Політ'; }, 180);
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function cashOut() {
+    if (!running || cashed) return;
+    const now = performance.now();
+    if (now >= crashTs) return;
+
+    const t = Math.max(0, (now - startTs) / 1000);
+    const mult = Math.min(X_MAX, 1 + GROWTH_PER_SEC * t);
+    const win = Math.floor(activeBet * mult);
+
+    cashed = true;
+    balanceAdd(win);
+
+    addWinToHistory({
+      bet: activeBet,
+      win,
+      comboHtml: 'Rocket',
+      mult: Number(mult.toFixed(2))
+    });
+
+    pushXHistory(mult);
+
+    if (statusEl) statusEl.textContent = `Забрано: 💎${win} (x${mult.toFixed(2)})`;
+
+    running = false;
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+    setTimeout(resetStage, 600);
+  }
+
+  if (betInput) betInput.value = clamp(MIN_CONST);
+  betInput?.addEventListener('input', () => {
+    const raw = Math.floor(Number(betInput.value) || 0);
+    betInput.value = clamp(raw);
+  });
+  btnMax?.addEventListener('click', () => { if (betInput) betInput.value = clamp(getBalance()); });
+  btnMin?.addEventListener('click', () => { if (betInput) betInput.value = clamp(MIN_CONST); });
+
+  launchBtn?.addEventListener('click', startRound);
+  cashBtn?.addEventListener('click', cashOut);
+
+  buildScale();
+  resetStage();
+
+  window.addEventListener('resize', () => {
+    const txt = multEl?.textContent || 'x1.00';
+    const m = Number((txt.replace(/[^\d.]/g, '')) || 1) || 1;
+    const yb = (Math.max(MIN_X, Math.min(X_MAX, m)) - MIN_X) * PX_PER_X;
+    updateStick(yb, scaleTranslate);
+  });
+
+  if (window.ResizeObserver && stage) {
+    const ro = new ResizeObserver(() => {
+      const txt = multEl?.textContent || 'x1.00';
+      const m = Number((txt.replace(/[^\d.]/g, '')) || 1) || 1;
+      const yb = (Math.max(MIN_X, Math.min(DISPLAY_X_MAX, m)) - MIN_X) * PX_PER_X;
+      updateStick(yb, scaleTranslate);
+    });
+    ro.observe(stage);
+  }
+}
+
+// NEW: keep --menu-bar-h equal to real topbar height (prevents overlap on mobile wraps)
+function ensureDynamicMenuTopbar() {
+  const bar = document.getElementById('menu-topbar');
+  if (!bar) return;
+  const apply = () => {
+    const h = bar.offsetHeight || 0;
+    document.body.style.setProperty('--menu-bar-h', h + 'px');
+  };
+  apply();
+  const ro = new ResizeObserver(apply);
+  ro.observe(bar);
+  window.addEventListener('resize', apply);
 }
 
 

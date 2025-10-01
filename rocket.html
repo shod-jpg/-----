@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Rocket — LyceumCasinoUa</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Дерев'яний фон для всієї сторінки + зберігаємо block layout */
+    body[data-page="rocket"] {
+      --page-bg-image: none; /* відключаємо глобальний градієнт якщо є */
+      display: block;
+      background:
+        url('rb.png') center center / cover no-repeat fixed,
+        #2b1e12; /* теплий коричневий бекграунд як запасний */
+    }
+
+    /* Головна рамка — дерев'яний стиль */
+    .rocket-frame {
+      position: fixed;
+      left: 556px;         /* було 24px — трохи правіше */
+      top: 10vh;          /* припіднято вгору */
+      width: min(560px, 88vw);
+      height: min(68vh, 720px);
+      border-radius: 18px;
+      border: 3px solid rgba(56,34,14,0.9);
+      background:
+        linear-gradient(180deg, rgba(115,82,44,0.96), rgba(88,62,34,0.96));
+      box-shadow:
+        0 14px 36px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(255,248,224,0.05),
+        inset 0 0 24px rgba(0,0,0,0.3);
+      overflow: hidden;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Легкий "шумний" сіруватий ореол */
+    .rocket-frame::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        /* імітація волокон дерева */
+        repeating-linear-gradient(22deg, rgba(255,255,255,0.035) 0 4px, rgba(0,0,0,0) 4px 14px),
+        radial-gradient(120% 110% at 50% -10%, rgba(255,212,140,0.18), rgba(0,0,0,0) 55%),
+        radial-gradient(120% 110% at 50% 110%, rgba(0,0,0,0.24), rgba(0,0,0,0) 55%);
+      mix-blend-mode: overlay;
+      opacity: 0.65;
+    }
+    /* Сіра тінь навколо (обводка-тінь) */
+    .rocket-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: 0 20px 46px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+    .rocket-frame-header {
+      padding: 14px 16px;
+      font-weight: 900;
+      color: #f2e6cf;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+      border-bottom: 1px solid rgba(90,60,32,0.55);
+    }
+    .rocket-frame-body {
+      padding: 0;
+      position: relative;
+      flex: 1;
+    }
+
+    /* Розмітка всередині великої рамки під Rocket */
+    .rocket-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: inherit;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.35)),
+        url('rbg.png') center center / cover no-repeat;
+    }
+    .rocket-hud {
+      position: absolute;
+      top: 8px; left: 10px;
+      font-weight: 900;
+      color: #eaeaea;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      z-index: 2;
+      user-select: none;
+    }
+    .rocket-hud .mult { font-size: 26px; display: inline-block; min-width: 72px; }
+    .rocket-hud .status { font-size: 12px; opacity: 0.9; display: block; }
+
+    .rocket-sprite, .rocket-explosion {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%) translateY(0); /* базова позиція коли анімації немає */
+      transform-origin: 50% 80%;
+      will-change: transform, opacity;
+      pointer-events: none;
+      user-select: none;
+    }
+    .rocket-sprite {
+      width: 120px; height: auto;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,0.45));
+      z-index: 1;
+    }
+    .rocket-explosion {
+      width: 160px; height: 160px;
+      display: none; /* показуємо при вибуху */
+      z-index: 3;
+    }
+
+    /* Маленьке віконце під великим, з таким же оформленням і довжиною */
+    .rocket-subframe {
+      position: fixed;
+      left: 556px; /* той самий відступ, що і у великого */
+      top: calc(10vh + min(68vh, 720px) + 16px); /* під великим + відступ */
+      width: min(560px, 88vw); /* така ж довжина */
+      height: min(18vh, 50px); /* нижче і компактніше */
+      border-radius: 18px;
+      border: 3px solid rgba(56,34,14,0.9);
+      background:
+        linear-gradient(180deg, rgba(115,82,44,0.96), rgba(88,62,34,0.96));
+      box-shadow:
+        0 14px 36px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(255,248,224,0.05),
+        inset 0 0 24px rgba(0,0,0,0.3);
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .rocket-subframe::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(22deg, rgba(255,255,255,0.035) 0 4px, rgba(0,0,0,0) 4px 14px),
+        radial-gradient(120% 110% at 50% -10%, rgba(255,212,140,0.18), rgba(0,0,0,0) 55%),
+        radial-gradient(120% 110% at 50% 110%, rgba(0,0,0,0.24), rgba(0,0,0,0) 55%);
+      mix-blend-mode: overlay;
+      opacity: 0.6;
+    }
+    .rocket-subframe::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: 0 20px 46px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    /* Праве вікно поруч із великим (така ж стилістика) */
+    .rocket-sidepanel {
+      position: fixed;
+      left: calc(556px + min(560px, 88vw) + 24px); /* справа від великого вікна */
+      top: 10vh;
+      width: min(420px, 70vw);
+      height: min(44vh, 520px);
+      border-radius: 18px;
+      border: 3px solid rgba(56,34,14,0.9);
+      background:
+        linear-gradient(180deg, rgba(115,82,44,0.96), rgba(88,62,34,0.96));
+      box-shadow:
+        0 14px 36px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(255,248,224,0.05),
+        inset 0 0 24px rgba(0,0,0,0.3);
+      overflow: hidden;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 12px;
+    }
+    .rocket-sidepanel::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(22deg, rgba(255,255,255,0.035) 0 4px, rgba(0,0,0,0) 4px 14px),
+        radial-gradient(120% 110% at 50% -10%, rgba(255,212,140,0.18), rgba(0,0,0,0) 55%),
+        radial-gradient(120% 110% at 50% 110%, rgba(0,0,0,0.24), rgba(0,0,0,0) 55%);
+      mix-blend-mode: overlay;
+      opacity: 0.5;
+    }
+    .rocket-sidepanel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: 0 20px 46px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    /* Верхній ряд — повна довжина із невеликими відступами */
+    .bet-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,84,48,0.55);
+      background: rgba(255,244,228,0.06);
+    }
+    .bet-label, .bet-suffix { color: #f3e6cd; }
+    #rocket-bet {
+      flex: 1 1 auto;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff8e0;
+      font-weight: 800;
+      text-align: center;
+    }
+    .bet-suffix { font-weight: 900; }
+
+    /* Кнопки під інпутом: ліворуч/праворуч */
+    .bet-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+    .side-btn {
+      text-decoration: none;
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,231,188,0.22);
+      background: linear-gradient(180deg, #5a3d22, #3d2917);
+      color: #fff;
+      font-weight: 900;
+      box-shadow:
+        0 6px 18px rgba(0,0,0,0.45),
+        inset 0 0 6px rgba(255,240,210,0.08);
+      cursor: pointer;
+    }
+    .side-btn.small { padding: 8px 12px; font-weight: 800; }
+
+    /* Кнопка старт по центру внизу */
+    .bet-start {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .side-btn.primary {
+      padding: 12px 18px;
+      border: 1px solid rgba(255,231,188,0.28);
+      background: linear-gradient(180deg, #6b4829, #4a321c);
+    }
+
+    /* Праворуч у великій рамці: вертикальна шкала ікса */
+    .x-scale {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      right: 8px;
+      width: 72px;
+      border-radius: 12px;
+      border: 1px solid rgba(87,57,29,0.7);
+      background: rgba(60,40,20,0.45);
+      overflow: hidden;
+      z-index: 1;
+    }
+    .x-scale-inner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;              /* 0 знаходиться внизу */
+      will-change: transform;
+    }
+    .x-tick {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(244,220,180,0.35);
+      opacity: 0.7;
+    }
+    .x-tick.major {
+      height: 2px;
+      background: rgba(255,236,200,0.7);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+    }
+    .x-label {
+      position: absolute;
+      right: 6px;
+      transform: translateY(-50%);
+      color: #f2e6cf;
+      font-size: 12px;
+      font-weight: 900;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+
+
+    /* НОВЕ: стилі для нової розмітки */
+    .rocket-page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #rocket-stage {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 18px 18px 0 0;
+    }
+    #x-scale {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 72px;
+      height: calc(100% - 16px);
+      border-radius: 12px;
+      border: 1px solid rgba(87,57,29,0.7);
+      background: rgba(60,40,20,0.45);
+      overflow: hidden;
+      z-index: 1;
+    }
+    #x-scale-inner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      will-change: transform;
+    }
+    .control-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .control-stack {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .bet-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 14px;
+      color: #f3e6cd;
+    }
+    input[type="number"] {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,231,188,0.22);
+      background: rgba(255,244,228,0.06);
+      color: #fff8e0;
+      font-weight: 800;
+      text-align: center;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    /* Адаптивність для нової розмітки */
+    @media (max-width: 480px) {
+      .rocket-frame, .rocket-subframe, .rocket-sidepanel {
+        left: 8px;
+        right: 8px;
+        width: auto !important;
+        min-width: 0;
+      }
+      .rocket-sidepanel {
+        top: calc(10vh + 8px);
+        height: auto;
+        padding: 8px;
+      }
+      .bet-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+      .bet-label, .bet-suffix {
+        font-size: 14px;
+      }
+      #rocket-bet {
+        font-size: 18px;
+      }
+      .side-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      .side-btn.primary {
+        padding: 10px 14px;
+      }
+    }
+
+    /* Трохи адаптиву, щоб панель не з’їжджала за край */
+    @media (max-width: 1100px) {
+      .rocket-sidepanel {
+        left: calc(24px + min(560px, 88vw) + 24px); /* прив’язка до лівого краю якщо великий left > ширини екрана */
+        width: min(380px, 60vw);
+      }
+    }
+  </style>
+</head>
+<body data-page="rocket">
+  <div class="rocket-page">
+    <main id="rocket-stage" aria-label="Сцена ракети">
+      <div id="x-scale" aria-hidden="true">
+        <div id="x-scale-inner"></div>
+      </div>
+
+      <!-- rocket/explosion -->
+      <div id="rocket-sprite" aria-hidden="true"></div>
+      <div id="rocket-explosion" aria-hidden="true" style="display:none;"></div>
+
+      <!-- HUD -->
+      <div class="rocket-hud">
+        <div id="rocket-mult">x1.00</div>
+        <div id="rocket-status">Готово</div>
+        <div id="rocket-last-crash" class="last-crash"></div>
+      </div>
+    </main>
+
+    <aside class="rocket-controls" aria-label="Панель керування">
+      <div class="bet-field">
+        <label for="rocket-bet">Ставка</label>
+        <input id="rocket-bet" type="number" min="1" step="1" inputmode="numeric" />
+      </div>
+
+      <!-- NEW: X-only history under bet field -->
+      <div id="rocket-x-history" aria-label="Історія множників"></div>
+
+      <div class="control-rows">
+        <div class="control-stack">
+          <button id="bet-max" type="button">Макс. ставка</button>
+          <button id="rocket-launch" type="button">Взліт</button>
+        </div>
+        <div class="control-stack">
+          <button id="bet-min" type="button">Мін. ставка</button>
+          <button id="rocket-cashout" type="button" disabled>Краш</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
